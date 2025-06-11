@@ -1,0 +1,29 @@
+default_config:
+  model:
+    architecture: "ResNet-18"
+    complex: false
+  training:
+    batch_size: 32
+    learning_rate: 0.001
+    epochs: 2
+    optimizer: "Adam"
+    loss_function: "focal_loss"
+  data:
+    input_shape: [3, 128, 128] # Example shape for GASF/GADF
+    data_dir: "/home/prasad/Desktop/datas2"
+    augmentation: true
+    dataloader:
+      num_workers: 4
+      pin_memory: true
+      drop_last_train: true
+      shuffle_train: true
+      shuffle_val: false
+      shuffle_test: false
+  logging:
+    log_dir: "./logs"
+    save_model: true
+    model_save_path: "./saved_models"
+  metrics:
+    track_accuracy: true
+    track_loss: true
+    complex_metrics: false # Set to true if using complex-valued models

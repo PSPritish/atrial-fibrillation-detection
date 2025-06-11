@@ -1,0 +1,5 @@
+data:
+  raw: "data/raw/"
+  processed: "data/processed/"
+logs: "logs/"
+saved_models: "saved_models/"

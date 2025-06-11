@@ -1,0 +1,27 @@
+learning_rate: 0.001
+batch_size: 32
+num_epochs: 100
+architecture: "ResNet-18"
+loss_function: "focal_loss"
+optimizer: "adam"
+scheduler:
+  type: "ReduceLROnPlateau"
+  patience: 5
+  factor: 0.5
+data:
+  train_data_path: "data/processed/train_data.csv"
+  val_data_path: "data/processed/val_data.csv"
+  test_data_path: "data/processed/test_data.csv"
+metrics:
+  - "accuracy"
+  - "f1_score"
+  - "precision"
+  - "recall"
+logging:
+  log_dir: "logs/"
+  log_interval: 10
+model:
+  save_dir: "saved_models/"
+  model_name: "resnet18_focal"
+  save_best_only: true
+  versioning: true
