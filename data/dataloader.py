@@ -1,8 +1,8 @@
-from torch.utils.data import DataLoader
-import torch
 import os
 import yaml
 import sys
+import torch
+from torch.utils.data import DataLoader
 
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

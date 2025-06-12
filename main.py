@@ -1,7 +1,7 @@
 import torch
 from models.resnet import AFResNet
 from data.dataloader import get_dataloaders, load_config
-from training.trainer import Trainer
+from trainer import Trainer
 import argparse
 
 
