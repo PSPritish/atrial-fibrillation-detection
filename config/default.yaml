@@ -1,15 +1,16 @@
 default_config:
+  wandb_api_key: "e25db435fb197ebd4e9df6caa2262e2f9f4571af"
+  run_name: "default_run"
   model:
-    architecture: "ResNet-18"
-    complex: false
+    architecture: "AlexNet"
   training:
-    batch_size: 1
+    batch_size: 32
     learning_rate: 0.001
-    epochs: 2
+    epochs: 10
     optimizer: "Adam"
-    loss_function: "focal_loss"
+    loss_function: "BinaryCrossEntropy"
   data:
-    input_shape: [3, 128, 128] # Example shape for GASF/GADF
+    input_shape: [3, 128, 128]
     data_dir: "/home/prasad/Desktop/datas2"
     augmentation: true
     dataloader:
@@ -23,7 +24,3 @@ default_config:
     log_dir: "./logs"
     save_model: true
     model_save_path: "./saved_models"
-  metrics:
-    track_accuracy: true
-    track_loss: true
-    complex_metrics: false # Set to true if using complex-valued models

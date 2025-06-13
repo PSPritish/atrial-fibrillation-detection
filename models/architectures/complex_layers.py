@@ -13,7 +13,6 @@ class ComplexConv2d(torch.nn.Module):
         self, in_channels, out_channels, kernel_size, stride=1, padding=0, bias=True
     ):
         super(ComplexConv2d, self).__init__()
-        # Each complex channel becomes a channel in the real/imag convolutions
         self.real_conv = torch.nn.Conv2d(
             in_channels, out_channels, kernel_size, stride, padding, bias=bias
         )
@@ -24,8 +23,6 @@ class ComplexConv2d(torch.nn.Module):
     def forward(self, x):
         if not torch.is_complex(x):
             raise ValueError(f"Input should be a complex tensor. Got {x.dtype}")
-
-        # The real/imag parts maintain the same number of channels as x
         return apply_complex(self.real_conv, self.imag_conv, x)
 
 

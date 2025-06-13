@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
+from utils.tqdmtest import tqdm
 from data.dataloader import get_dataloaders, load_config
 from models.complex_resnet import complex_resnet18
 from models.components.losses import ComplexMagnitudeLoss
