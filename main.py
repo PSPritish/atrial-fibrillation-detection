@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from data.dataloader import get_dataloaders
+from models.complex_efficientnet import complex_efficientnet_b0
 from train import Trainer
 from models.complex_resnet import complex_resnet18
 from torchvision import models
@@ -51,11 +52,23 @@ def main():
         settings={"console": "wrap"},  # Modern way to capture terminal output
     )
 
+    # dataset_classes = {
+    #     "combined": CombinedDataset,
+    #     "gasf": GASFDataset,
+    #     "gadf": GADFDataset,
+    #     "complex": ComplexDataset,
+    # }
+
     # Get data loaders (complex data for complex model)
-    dataloaders = get_dataloaders(dataset_type="gadf")
+    dataloaders = get_dataloaders(dataset_type="complex")
 
     # Create model directly
-    model = models.AlexNet(num_classes=1)
+    # model = complex_resnet18(config)
+    model = complex_efficientnet_b0(config)
+
+    if torch.cuda.device_count() > 1:
+        print(f"Using {torch.cuda.device_count()} GPUs!")
+        model = nn.DataParallel(model)
 
     # Log model architecture to wandb
     wandb.watch(model, log="all")

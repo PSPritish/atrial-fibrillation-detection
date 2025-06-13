@@ -2,7 +2,9 @@ import torch
 import torch.nn as nn
 from collections import OrderedDict
 import numpy as np
-from tabulate import tabulate  # You may need to install this: pip install tabulate
+from tabulate import tabulate
+import sys
+import os
 
 
 def count_parameters(model):
@@ -10,62 +12,69 @@ def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 
-def model_summary(model, input_size, batch_size=-1, device=None, print_summary=True):
-    """
-    Generates a summary of the PyTorch model similar to Keras model.summary()
+def model_summary(
+    model,
+    input_size=(3, 224, 224),
+    batch_size=16,
+    device="cuda" if torch.cuda.is_available() else "cpu",
+):
+    """Generate a comprehensive summary of a PyTorch model.
 
     Args:
-        model: PyTorch model instance
-        input_size: Input size (tuple or list) excluding batch dimension
-        batch_size: Batch size to use for shape inference
-        device: Device to run the model on ('cuda', 'cpu', or None for auto-detect)
-        print_summary: Whether to print the summary
+        model (nn.Module): PyTorch model to summarize
+        input_size (tuple): Input dimensions excluding batch size (C, H, W)
+        batch_size (int): Batch size for memory calculation
+        device (str): Device to use for forward pass
 
     Returns:
-        summary: A dictionary containing the summary information
+        None: Prints summary to console
     """
+    # Move model to specified device
+    model = model.to(device)
+    model.eval()
+
+    # Check if model is complex-valued
+    is_complex = any(torch.is_complex(p) for name, p in model.named_parameters())
+    has_complex_layers = any("Complex" in type(m).__name__ for m in model.modules())
+    model_type = "Complex-valued" if is_complex or has_complex_layers else "Real-valued"
+
+    # Create a hook function to capture layer information
+    summary = OrderedDict()
+    hooks = []
 
     def register_hook(module):
         def hook(module, input, output):
             class_name = str(module.__class__).split(".")[-1].split("'")[0]
             module_idx = len(summary)
 
-            m_key = "%s-%i" % (class_name, module_idx + 1)
-            summary[m_key] = OrderedDict()
-            summary[m_key]["input_shape"] = list(input[0].size())
-            summary[m_key]["input_shape"][0] = batch_size
+            # For each module, store key info
+            summary[module_idx] = OrderedDict()
+            summary[module_idx]["name"] = class_name
+            summary[module_idx]["id"] = id(module)
 
+            # Handle different output types
             if isinstance(output, (list, tuple)):
-                summary[m_key]["output_shape"] = [
-                    [-1] + list(o.size())[1:] for o in output
-                ]
+                summary[module_idx]["output_shape"] = list(output[0].size())
             else:
-                summary[m_key]["output_shape"] = list(output.size())
-                summary[m_key]["output_shape"][0] = batch_size
+                if isinstance(output, torch.Tensor):
+                    summary[module_idx]["output_shape"] = list(output.size())
+                else:
+                    summary[module_idx]["output_shape"] = "?"
 
+            # Count parameters
             params = 0
-            if hasattr(module, "weight") and hasattr(module.weight, "size"):
-                params += torch.prod(torch.LongTensor(list(module.weight.size())))
-                summary[m_key]["trainable"] = module.weight.requires_grad
-            if hasattr(module, "bias") and hasattr(module.bias, "size"):
-                params += torch.prod(torch.LongTensor(list(module.bias.size())))
+            trainable_params = 0
+            for p_name, p in module.named_parameters(recurse=False):
+                param_count = p.numel()
+                params += param_count
+                if p.requires_grad:
+                    trainable_params += param_count
 
-            summary[m_key]["nb_params"] = params
+            summary[module_idx]["nb_params"] = params
+            summary[module_idx]["trainable"] = trainable_params
+            summary[module_idx]["non_trainable"] = params - trainable_params
 
-            # For complex layers
-            if "Complex" in class_name:
-                # Attempt to capture real and imaginary parameters separately
-                real_params = 0
-                imag_params = 0
-                if hasattr(module, "real_conv"):
-                    real_params += sum(p.numel() for p in module.real_conv.parameters())
-                if hasattr(module, "imag_conv"):
-                    imag_params += sum(p.numel() for p in module.imag_conv.parameters())
-                if real_params > 0 or imag_params > 0:
-                    summary[m_key][
-                        "complex_params"
-                    ] = f"R:{real_params}, I:{imag_params}"
-
+        # Skip certain modules that are handled by their parent
         if (
             not isinstance(module, nn.Sequential)
             and not isinstance(module, nn.ModuleList)
@@ -73,101 +82,102 @@ def model_summary(model, input_size, batch_size=-1, device=None, print_summary=T
         ):
             hooks.append(module.register_forward_hook(hook))
 
-    # Determine device to use
-    if device is None:
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    else:
-        device = device.lower()
-        assert device in [
-            "cuda",
-            "cpu",
-        ], "Input device is not valid, please specify 'cuda' or 'cpu'"
-        if device == "cuda" and not torch.cuda.is_available():
-            print("CUDA is not available, using CPU instead.")
-            device = "cpu"
-
-    # Move model to the specified device
-    model = model.to(device)
-
-    # Multiple inputs to the network
-    if isinstance(input_size, tuple):
-        input_size = [input_size]
-
-    # Batch size of 2 for batchnorm
-    x = [torch.rand(2, *in_size).to(device) for in_size in input_size]
-
-    # Check if model is complex
-    is_complex_model = any("Complex" in str(type(m)) for m in model.modules())
-    if is_complex_model:
-        x = [torch.complex(t, torch.zeros_like(t)) for t in x]
-
-    # Create properties
-    summary = OrderedDict()
-    hooks = []
-
-    # Register hook
+    # Register hooks for all modules
     model.apply(register_hook)
 
-    # Make a forward pass
-    model(*x)
+    # Create a dummy input tensor
+    x = torch.zeros(batch_size, *input_size, device=device)
 
-    # Remove these hooks
+    # Handle case for complex input
+    if has_complex_layers:
+        # Create a proper 3-channel complex tensor
+        real_part = x[:, :3]  # First 3 channels as real
+        imag_part = torch.zeros_like(real_part)  # Zeros as imaginary
+
+        # Create complex tensor per channel
+        channels = []
+        for i in range(3):
+            channels.append(torch.complex(real_part[:, i], imag_part[:, i]))
+
+        # Stack to form [B, 3, H, W] complex tensor
+        x = torch.stack(channels, dim=1)
+
+    # Make a forward pass to trigger hooks
+    try:
+        model(x)
+    except Exception as e:
+        print(f"Error during forward pass: {e}")
+
+    # Remove hooks
     for h in hooks:
         h.remove()
 
-    # Create summary table
-    table = []
-    total_params = 0
-    total_output = 0
-    trainable_params = 0
+    # Count total parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    non_trainable_params = total_params - trainable_params
 
-    # Header
-    header = ["Layer (type)", "Output Shape", "Param #"]
+    # Calculate memory usage
+    input_size_bytes = np.prod(input_size) * batch_size * 4  # 4 bytes for float32
+    if is_complex or has_complex_layers:
+        input_size_bytes *= 2  # Complex values use twice the memory
 
-    # Add rows
-    for layer in summary:
-        table.append(
-            [
-                layer,
-                str(summary[layer]["output_shape"]),
-                "{0:,}".format(summary[layer]["nb_params"]),
-            ]
-        )
-        total_params += summary[layer]["nb_params"]
+    # Prepare table data
+    table_data = []
+    for layer in summary.values():
+        if isinstance(layer["output_shape"], list):
+            layer["output_shape"] = [batch_size] + layer["output_shape"][1:]
+            output_shape_str = str(layer["output_shape"])
+        else:
+            output_shape_str = str(layer["output_shape"])
 
-        if "output_shape" in summary[layer]:
-            output_size = summary[layer]["output_shape"]
-            if isinstance(output_size, list):
-                for item in output_size:
-                    total_output += np.prod(item)
-            else:
-                total_output += np.prod(output_size)
+        row = [
+            f"{layer['name']}-{layer['id']}"[-70:],
+            output_shape_str,
+            "{:,}".format(layer["nb_params"]),
+        ]
+        table_data.append(row)
 
-        if "trainable" in summary[layer]:
-            if summary[layer]["trainable"]:
-                trainable_params += summary[layer]["nb_params"]
+    # Create a more readable version with just layer type and count
+    readable_table = []
+    layer_counts = {}
+    for layer in summary.values():
+        layer_name = layer["name"]
+        if layer_name not in layer_counts:
+            layer_counts[layer_name] = 1
+        else:
+            layer_counts[layer_name] += 1
 
-    # Add totals
-    table.append(["", "", ""])
-    table.append(["Total params", "", "{0:,}".format(total_params)])
-    table.append(["Trainable params", "", "{0:,}".format(trainable_params)])
-    table.append(
-        ["Non-trainable params", "", "{0:,}".format(total_params - trainable_params)]
-    )
+    layer_idx = 1
+    for layer in summary.values():
+        if isinstance(layer["output_shape"], list):
+            output_shape_str = str(layer["output_shape"])
+        else:
+            output_shape_str = str(layer["output_shape"])
 
-    if print_summary:
-        print(tabulate(table, headers=header, tablefmt="grid"))
+        row = [
+            f"{layer['name']}-{layer_idx}",
+            output_shape_str,
+            "{:,}".format(layer["nb_params"]),
+        ]
+        readable_table.append(row)
+        layer_idx += 1
 
-        # Additional model information
-        print(
-            f"\nModel Type: {'Complex-valued' if is_complex_model else 'Real-valued'}"
-        )
-        print(f"Device: {device}")
-        memory_usage = total_output * 4  # Bytes
-        if is_complex_model:
-            memory_usage *= 2  # Complex values use twice the memory
-        print(f"Estimated memory usage: {memory_usage / 1024 / 1024:.2f} MB")
+    # Print summary
+    headers = ["Layer (type)", "Output Shape", "Param #"]
+    print(tabulate(readable_table, headers=headers, tablefmt="grid"))
 
+    # Print model summary
+    print("\n" + "=" * 50)
+    print(f"Model Type: {model_type}")
+    print(f"Device: {device}")
+    print(f"Total params: {total_params:,}")
+    print(f"Trainable params: {trainable_params:,}")
+    print(f"Non-trainable params: {non_trainable_params:,}")
+    print(f"Estimated memory usage: {input_size_bytes / (1024 * 1024):.2f} MB")
+    print("=" * 50)
+
+    # Return summary dict for further processing if needed
     return summary
 
 

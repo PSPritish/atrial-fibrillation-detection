@@ -15,5 +15,5 @@ model.fc = torch.nn.Linear(
 # Generate summary
 model_summary(model, input_size=(3, 128, 128))
 
-model2 = AFResNet(config)
+model2 = complex_resnet18(config)
 model_summary(model2, input_size=(3, 128, 128))

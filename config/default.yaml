@@ -1,16 +1,16 @@
 default_config:
   wandb_api_key: "e25db435fb197ebd4e9df6caa2262e2f9f4571af"
-  run_name: "default_run"
+  run_name: "Chunked DataSet"
   model:
-    architecture: "AlexNet"
+    architecture: "Complex EfficientNet"
   training:
     batch_size: 32
     learning_rate: 0.001
-    epochs: 10
+    epochs: 30
     optimizer: "Adam"
     loss_function: "BinaryCrossEntropy"
   data:
-    input_shape: [3, 128, 128]
+    input_shape: [3, 224, 224]
     data_dir: "/home/prasad/Desktop/datas2"
     augmentation: true
     dataloader:
