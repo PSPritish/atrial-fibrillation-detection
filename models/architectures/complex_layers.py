@@ -21,9 +21,18 @@ class ComplexConv2d(torch.nn.Module):
         )
 
     def forward(self, x):
-        if not torch.is_complex(x):
-            raise ValueError(f"Input should be a complex tensor. Got {x.dtype}")
-        return apply_complex(self.real_conv, self.imag_conv, x)
+        # Handle [batch, channels, height, width, 2] format
+        if not torch.is_complex(x) and x.dim() == 5 and x.size(-1) == 2:
+            real_part = x[..., 0]
+            imag_part = x[..., 1]
+            x = torch.complex(real_part, imag_part)
+        # Continue with normal processing
+        if x.dtype != torch.complex64:
+            x = x.to(dtype=torch.complex64)
+        real = self.real_conv(x.real) - self.imag_conv(x.imag)
+        imag = self.real_conv(x.imag) + self.imag_conv(x.real)
+        output = torch.complex(real, imag)
+        return output
 
 
 class ComplexMaxPool2d(torch.nn.Module):

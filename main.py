@@ -5,7 +5,6 @@ import torch.optim as optim
 from data.dataloader import get_dataloaders
 from models.complex_efficientnet import complex_efficientnet_b0
 from models.custom_resnet import resnet18
-from models.resnet import AFResNet
 from train import Trainer
 from models.complex_resnet import complex_resnet18
 from torchvision import models
@@ -65,7 +64,7 @@ def main():
     dataloaders = get_dataloaders(dataset_type="complex")
 
     # Create model directly
-    model = resnet18(config)
+    model = complex_resnet18(config)
     # model = AFResNet(config)
 
     if torch.cuda.device_count() > 1:
@@ -77,6 +76,9 @@ def main():
 
     # Set up simple loss function and optimizer
     criterion = nn.BCEWithLogitsLoss()
+
+    # Convert learning_rate to float if it's a string
+    learning_rate = float(config.get("training", {}).get("learning_rate", 0.001))
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Set up trainer
@@ -118,6 +120,8 @@ def main():
     # Finish wandb run
     wandb.finish()
 
+
+torch.autograd.set_detect_anomaly(True)  # Enable anomaly detection
 
 if __name__ == "__main__":
     main()

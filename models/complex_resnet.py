@@ -29,6 +29,8 @@ class ComplexBasicBlock(nn.Module):
             out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
         )
         self.bn2 = ComplexNaiveBatchNorm2d(out_channels)
+        self.relu2 = ModReLU(out_channels)  # For the output after addition
+
         self.downsample = downsample
         self.stride = stride
 
@@ -41,7 +43,7 @@ class ComplexBasicBlock(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
+        out = out + identity
         out = self.relu2(out)  # Use the correct channel count
 
         return out
@@ -89,7 +91,7 @@ class ComplexBottleneck(nn.Module):
         if self.downsample is not None:
             identity = self.downsample(x)
 
-        out += identity
+        out = out + identity
         out = self.relu2(out)  # Use the correct channel count
 
         return out
@@ -185,6 +187,13 @@ class ComplexResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # Convert from [batch, channels, height, width, 2] format to PyTorch complex tensor
+        if not torch.is_complex(x) and x.dim() == 5 and x.size(-1) == 2:
+            # The last dimension contains real and imaginary parts
+            real_part = x[..., 0]
+            imag_part = x[..., 1]
+            x = torch.complex(real_part, imag_part)
+
         # If already complex tensor, use it directly
         if torch.is_complex(x):
             # For 3-channel complex input, no conversion needed
