@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from data.dataloader import get_dataloaders
 from models.complex_efficientnet import complex_efficientnet_b0
+from models.custom_resnet import resnet18
+from models.resnet import AFResNet
 from train import Trainer
 from models.complex_resnet import complex_resnet18
 from torchvision import models
@@ -63,8 +65,8 @@ def main():
     dataloaders = get_dataloaders(dataset_type="complex")
 
     # Create model directly
-    # model = complex_resnet18(config)
-    model = complex_efficientnet_b0(config)
+    model = resnet18(config)
+    # model = AFResNet(config)
 
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")

@@ -24,7 +24,7 @@ class ComplexBasicBlock(nn.Module):
             bias=False,
         )
         self.bn1 = ComplexNaiveBatchNorm2d(out_channels)
-        self.relu = ModReLU(out_channels)
+        self.relu1 = ModReLU(out_channels)  # For first two activations
         self.conv2 = ComplexConv2d(
             out_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False
         )
@@ -35,18 +35,14 @@ class ComplexBasicBlock(nn.Module):
     def forward(self, x):
         identity = x
 
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
+        out = self.relu1(self.bn1(self.conv1(x)))
+        out = self.relu1(self.bn2(self.conv2(out)))
 
         if self.downsample is not None:
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
+        out = self.relu2(out)  # Use the correct channel count
 
         return out
 
@@ -71,7 +67,8 @@ class ComplexBottleneck(nn.Module):
             out_channels, out_channels * self.expansion, kernel_size=1, bias=False
         )
         self.bn3 = ComplexNaiveBatchNorm2d(out_channels * self.expansion)
-        self.relu = ModReLU(out_channels)
+        self.relu1 = ModReLU(out_channels)  # For first two activations
+        self.relu2 = ModReLU(out_channels * self.expansion)  # For final activation
         self.downsample = downsample
         self.stride = stride
 
@@ -80,11 +77,11 @@ class ComplexBottleneck(nn.Module):
 
         out = self.conv1(x)
         out = self.bn1(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         out = self.conv2(out)
         out = self.bn2(out)
-        out = self.relu(out)
+        out = self.relu1(out)
 
         out = self.conv3(out)
         out = self.bn3(out)
@@ -93,7 +90,7 @@ class ComplexBottleneck(nn.Module):
             identity = self.downsample(x)
 
         out += identity
-        out = self.relu(out)
+        out = self.relu2(out)  # Use the correct channel count
 
         return out
 
@@ -222,13 +219,22 @@ class ComplexResNet(nn.Module):
 
 
 def complex_resnet18(config):
-    """Create a complex-valued ResNet-18 model"""
-    num_classes = 1  # Binary classification
+    """
+    Create a complex-valued ResNet-18 model
 
-    # Use 3 channels for complex input to match your dataset
-    input_channels = 3
+    Args:
+        config: Configuration dictionary
 
-    print(f"Creating complex ResNet-18 with {input_channels} complex channels")
+    Returns:
+        ComplexResNet: Complex-valued ResNet-18 model
+    """
+    # Read from config consistently
+    num_classes = config.get("model", {}).get("num_classes", 1)
+    input_channels = config.get("data", {}).get("input_shape", [3, 224, 224])[0]
+
+    print(
+        f"Creating complex ResNet-18 with {input_channels} complex channels and {num_classes} classes"
+    )
 
     return ComplexResNet(
         ComplexBasicBlock,
@@ -248,8 +254,13 @@ def complex_resnet34(config):
     Returns:
         ComplexResNet: Complex-valued ResNet-34 model
     """
-    num_classes = 1  # Binary classification
-    input_channels = config.get("data", {}).get("input_shape", [2, 128, 128])[0]
+    # Read from config consistently
+    num_classes = config.get("model", {}).get("num_classes", 1)
+    input_channels = config.get("data", {}).get("input_shape", [3, 224, 224])[0]
+
+    print(
+        f"Creating complex ResNet-34 with {input_channels} complex channels and {num_classes} classes"
+    )
 
     return ComplexResNet(
         ComplexBasicBlock,
@@ -269,8 +280,13 @@ def complex_resnet50(config):
     Returns:
         ComplexResNet: Complex-valued ResNet-50 model
     """
-    num_classes = 1  # Binary classification
-    input_channels = config.get("data", {}).get("input_shape", [2, 128, 128])[0]
+    # Read from config consistently
+    num_classes = config.get("model", {}).get("num_classes", 1)
+    input_channels = config.get("data", {}).get("input_shape", [3, 224, 224])[0]
+
+    print(
+        f"Creating complex ResNet-50 with {input_channels} complex channels and {num_classes} classes"
+    )
 
     return ComplexResNet(
         ComplexBottleneck,

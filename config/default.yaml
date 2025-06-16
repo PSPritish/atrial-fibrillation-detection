@@ -2,9 +2,9 @@ default_config:
   wandb_api_key: "e25db435fb197ebd4e9df6caa2262e2f9f4571af"
   run_name: "Chunked DataSet"
   model:
-    architecture: "Complex EfficientNet"
+    architecture: "ResNet-18"
   training:
-    batch_size: 32
+    batch_size: 16
     learning_rate: 0.001
     epochs: 30
     optimizer: "Adam"
@@ -12,6 +12,7 @@ default_config:
   data:
     input_shape: [3, 224, 224]
     data_dir: "/home/prasad/Desktop/datas2"
+    num_classes: 1
     augmentation: true
     dataloader:
       num_workers: 4

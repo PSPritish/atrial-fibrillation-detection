@@ -131,15 +131,7 @@ class CombinedDataset(Dataset):
         gasf_image = T.functional.normalize(
             gasf_image, mean=self.gasf_mean, std=self.gasf_std
         )
-        gadf_grayscale = T.functional.rgb_to_grayscale(
-            gadf_image, num_output_channels=1
-        )
-        gasf_grayscale = T.functional.rgb_to_grayscale(
-            gasf_image, num_output_channels=1
-        )
-        zero_chanel = torch.zeros_like(gadf_grayscale)
-
-        modified_image = torch.cat((gadf_grayscale, gasf_grayscale, zero_chanel), dim=0)
+        modified_image = torch.cat((gadf_image, gasf_image), dim=0)
         return modified_image, label
 
 
@@ -528,12 +520,21 @@ class ComplexDataset(Dataset):
         gasf_image = T.functional.normalize(
             gasf_image, mean=self.gasf_mean, std=self.gasf_std
         )
-        # Create a complex tensor using GADF as real part and GASF as imaginary part
-        complex_r = torch.complex(gadf_image[0], gasf_image[0])
-        complex_g = torch.complex(gadf_image[1], gasf_image[1])
-        complex_b = torch.complex(gadf_image[2], gasf_image[2])
+        # Create a complex tensor using GASF as real part and GADF as imaginary part
+        complex_r = torch.complex(gasf_image[0], gadf_image[0])
+        complex_g = torch.complex(gasf_image[1], gadf_image[1])
+        complex_b = torch.complex(gasf_image[2], gadf_image[2])
 
         # Stack channels to form the final complex image
         complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        # Create a zero tensor with the same shape as gadf_image
+        # zero_tensor = torch.zeros_like(gadf_image)
 
+        # # Create a complex tensor with zero real part and GADF as imaginary part
+        # complex_r = torch.complex(zero_tensor[0], gadf_image[0])
+        # complex_g = torch.complex(zero_tensor[1], gadf_image[1])
+        # complex_b = torch.complex(zero_tensor[2], gadf_image[2])
+
+        # # Stack channels to form the final complex image
+        # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
         return complex_image, label
