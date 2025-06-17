@@ -508,26 +508,26 @@ class ComplexDataset(Dataset):
 
         gadf_path, gasf_path, label = self.data[idx]
         gadf_image = Image.open(gadf_path).convert("RGB")
-        # gasf_image = Image.open(gasf_path).convert("RGB")
+        gasf_image = Image.open(gasf_path).convert("RGB")
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
-            # gasf_image = self.transforms(gasf_image)
+            gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
             gadf_image, mean=self.gadf_mean, std=self.gadf_std
         )
-        # gasf_image = T.functional.normalize(
-        #     gasf_image, mean=self.gasf_mean, std=self.gasf_std
-        # )
+        gasf_image = T.functional.normalize(
+            gasf_image, mean=self.gasf_mean, std=self.gasf_std
+        )
         # --------------------GASF + i GADF ------------------------------------------
-        # # Create a complex tensor using GASF as real part and GADF as imaginary part
-        # complex_r = torch.complex(gasf_image[0], gadf_image[0])
-        # complex_g = torch.complex(gasf_image[1], gadf_image[1])
-        # complex_b = torch.complex(gasf_image[2], gadf_image[2])
+        # Create a complex tensor using GASF as real part and GADF as imaginary part
+        complex_r = torch.complex(gasf_image[0], gadf_image[0])
+        complex_g = torch.complex(gasf_image[1], gadf_image[1])
+        complex_b = torch.complex(gasf_image[2], gadf_image[2])
 
-        # # Stack channels to form the final complex image
-        # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        # Stack channels to form the final complex image
+        complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
         # -----------------------0 + i GADF -------------------------------------------
         # # Create a zero tensor with the same shape as gadf_image
         # zero_tensor = torch.zeros_like(gadf_image)
@@ -540,11 +540,11 @@ class ComplexDataset(Dataset):
         # # Stack channels to form the final complex image
         # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
         # ------------------------GADF + i GADF --------------------------------------
-        # Create a complex tensor using GASF as real part and GADF as imaginary part
-        complex_r = torch.complex(gadf_image[0], gadf_image[0])
-        complex_g = torch.complex(gadf_image[1], gadf_image[1])
-        complex_b = torch.complex(gadf_image[2], gadf_image[2])
+        # # Create a complex tensor using GASF as real part and GADF as imaginary part
+        # complex_r = torch.complex(gadf_image[0], gadf_image[0])
+        # complex_g = torch.complex(gadf_image[1], gadf_image[1])
+        # complex_b = torch.complex(gadf_image[2], gadf_image[2])
 
-        # Stack channels to form the final complex image
-        complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        # # Stack channels to form the final complex image
+        # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
         return complex_image, label

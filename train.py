@@ -7,13 +7,16 @@ import wandb
 
 
 class Trainer:
-    def __init__(self, model, dataloaders, config, criterion, optimizer):
+    def __init__(
+        self, model, dataloaders, config, criterion, optimizer, scheduler=None
+    ):
         """Simple trainer for PyTorch models"""
         self.model = model
         self.dataloaders = dataloaders
         self.config = config
         self.criterion = criterion
         self.optimizer = optimizer
+        self.scheduler = scheduler
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.use_wandb = config.get("use_wandb", False)
@@ -53,15 +56,16 @@ class Trainer:
                     inputs.to(self.device, non_blocking=True),
                     labels.to(self.device, non_blocking=True).float(),
                 )
-                with torch.cuda.stream(torch.cuda.Stream()):
-                    self.optimizer.zero_grad()
-                    outputs = self.model(inputs)
-                    loss = self.criterion(outputs, labels.unsqueeze(1))
-                    loss.backward()
-                    self.optimizer.step()
+
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, labels.unsqueeze(1))
+                loss.backward()
+                self.optimizer.step()
                 train_loss += loss.item() * inputs.size(0)
 
                 # Calculate training accuracy
+                # outputs = torch.abs(outputs) # Get magnitude of complex outputs
                 predicted = (torch.sigmoid(outputs) > 0.5).float()
                 train_correct += (predicted.squeeze() == labels).sum().item()
                 train_total += labels.size(0)
@@ -94,6 +98,7 @@ class Trainer:
                     val_loss += loss.item() * inputs.size(0)
 
                     # Store predictions and labels for metrics
+                    # outputs = torch.abs(outputs) # Get magnitude of complex outputs
                     predicted = (torch.sigmoid(outputs) > 0.5).float()
                     # Safely handle predictions regardless of batch size
                     pred_np = predicted.cpu().numpy().reshape(-1)  # Flatten to 1D array
@@ -185,6 +190,13 @@ class Trainer:
                         save_path, f"best_model_epoch_{epoch+1}.pth"
                     )
                     # wandb.save(model_path) # to save models online
+
+            # Step the scheduler based on validation loss
+            if self.scheduler is not None:
+                self.scheduler.step(val_loss)
+                current_lr = self.optimizer.param_groups[0]["lr"]
+                print(f"Current learning rate: {current_lr}")
+                wandb.log({"learning_rate": current_lr})
 
             print()
 

@@ -1,10 +1,15 @@
 import os
+import sched
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 from data.dataloader import get_dataloaders
 from models.complex_efficientnet import complex_efficientnet_b0
+from models.components.losses import ComplexMagnitudeAndPhaseLoss
 from models.custom_resnet import resnet18
+from models.dual_resnet import DualResNet
+from models.dual_resnet_CF import DualResNetCF
 from train import Trainer
 from models.complex_resnet import complex_resnet18
 from torchvision import models
@@ -64,9 +69,10 @@ def main():
     dataloaders = get_dataloaders(dataset_type="complex")
 
     # Create model directly
-    model = complex_resnet18(config)
+    # model = complex_resnet18(config)
     # model = AFResNet(config)
-
+    # model = DualResNet(config["data"]["num_classes"])
+    model = DualResNetCF(config["data"]["num_classes"])
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
@@ -77,10 +83,20 @@ def main():
 
     # Set up simple loss function and optimizer
     criterion = nn.BCEWithLogitsLoss()
+    # criterion = ComplexMagnitudeAndPhaseLoss()
 
     # Convert learning_rate to float if it's a string
     learning_rate = float(config.get("training", {}).get("learning_rate", 0.001))
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Add ReduceLROnPlateau scheduler
+    scheduler = lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",  # Reduce LR when val_loss stops decreasing
+        factor=0.5,  # Multiply LR by this factor when reducing
+        patience=3,  # Number of epochs with no improvement to wait
+        min_lr=1e-6,  # Lower bound on the learning rate
+    )
 
     # Set up trainer
     config["use_wandb"] = True
@@ -90,6 +106,7 @@ def main():
         config=config,
         criterion=criterion,
         optimizer=optimizer,
+        scheduler=scheduler,
     )
     # Calculate training time
     start_time = time.time()

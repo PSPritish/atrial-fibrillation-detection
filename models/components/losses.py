@@ -23,25 +23,6 @@ class FocalLoss(nn.Module):
             return F_loss
 
 
-class ComplexMagnitudeLoss(nn.Module):
-    """Loss function for complex models that output magnitude before final layer"""
-
-    def __init__(self, base_loss="bce", reduction="mean"):
-        super(ComplexMagnitudeLoss, self).__init__()
-        self.reduction = reduction
-        self.base_loss = base_loss
-
-    def forward(self, inputs, targets):
-        # Inputs are already real (magnitude was taken in model)
-        # Just apply standard loss
-        if self.base_loss == "bce":
-            return nn.BCEWithLogitsLoss(reduction=self.reduction)(inputs, targets)
-        elif self.base_loss == "focal":
-            return FocalLoss(reduction=self.reduction)(inputs, targets)
-        else:
-            raise ValueError(f"Unsupported base loss: {self.base_loss}")
-
-
 class ComplexMagnitudeAndPhaseLoss(nn.Module):
     """Loss that considers both magnitude and phase of complex outputs"""
 
@@ -140,28 +121,3 @@ class ComplexFocalLoss(nn.Module):
                 return F_loss.sum()
             else:
                 return F_loss
-
-
-# Example usage in your trainer
-def _get_loss_function(self):
-    loss_name = self.config.get("training", {}).get("loss_function", "bce")
-    is_complex = self.config.get("model", {}).get("complex", False)
-
-    if is_complex:
-        if loss_name == "focal_loss":
-            return ComplexFocalLoss()
-        elif loss_name == "dice_loss":
-            return ComplexDiceLoss()
-        elif loss_name == "magnitude_phase_loss":
-            return ComplexMagnitudeAndPhaseLoss()
-        else:
-            return ComplexMagnitudeLoss()
-    else:
-        if loss_name == "focal_loss":
-            return FocalLoss()
-        elif loss_name == "dice_loss":
-            from models.components.losses import DiceLoss
-
-            return DiceLoss()
-        else:
-            return nn.BCEWithLogitsLoss()
