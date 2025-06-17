@@ -1,19 +1,29 @@
-saved_models
-logs
-wandb
+# Ignore configuration directories and files
+/config/
+saved_models/
+logs/
+wandb/
+save_models/
+
+# Python cache files
+__pycache__/
 **/__pycache__/
-*.pyc
-*.pkl
+*.py[cod]
+*$py.class
+
+# Compiled/intermediate files
 *.pyo
 *.pyd
+*.pyc
+*.pkl
+
+# Database files
 *.db
 *.sqlite
+
+# Log and data files
 *.log
 *.csv
 *.tsv
 *.json
-*.yaml    
-# Python cache files
-__pycache__/
-*.py[cod]
-*$py.class
+*.yaml

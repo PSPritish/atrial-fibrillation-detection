@@ -508,18 +508,18 @@ class ComplexDataset(Dataset):
 
         gadf_path, gasf_path, label = self.data[idx]
         gadf_image = Image.open(gadf_path).convert("RGB")
-        gasf_image = Image.open(gasf_path).convert("RGB")
+        # gasf_image = Image.open(gasf_path).convert("RGB")
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
-            gasf_image = self.transforms(gasf_image)
+            # gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
             gadf_image, mean=self.gadf_mean, std=self.gadf_std
         )
-        gasf_image = T.functional.normalize(
-            gasf_image, mean=self.gasf_mean, std=self.gasf_std
-        )
+        # gasf_image = T.functional.normalize(
+        #     gasf_image, mean=self.gasf_mean, std=self.gasf_std
+        # )
         # --------------------GASF + i GADF ------------------------------------------
         # # Create a complex tensor using GASF as real part and GADF as imaginary part
         # complex_r = torch.complex(gasf_image[0], gadf_image[0])

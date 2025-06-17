@@ -141,9 +141,6 @@ def main():
     elif args.complex:
         model = complex_resnet18(config)
         print("Using complex ResNet model")
-    else:
-        model = AFResNet(config)
-        print("Using standard ResNet model")
 
     # Load model weights
     if not os.path.exists(args.model_path):
