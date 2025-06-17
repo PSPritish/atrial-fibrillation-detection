@@ -49,14 +49,16 @@ class Trainer:
                 ncols=120,
             )
             for inputs, labels in train_it:
-                inputs, labels = inputs.to(self.device), labels.to(self.device).float()
-
-                self.optimizer.zero_grad()
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels.unsqueeze(1))
-                loss.backward()
-                self.optimizer.step()
-
+                inputs, labels = (
+                    inputs.to(self.device, non_blocking=True),
+                    labels.to(self.device, non_blocking=True).float(),
+                )
+                with torch.cuda.stream(torch.cuda.Stream()):
+                    self.optimizer.zero_grad()
+                    outputs = self.model(inputs)
+                    loss = self.criterion(outputs, labels.unsqueeze(1))
+                    loss.backward()
+                    self.optimizer.step()
                 train_loss += loss.item() * inputs.size(0)
 
                 # Calculate training accuracy

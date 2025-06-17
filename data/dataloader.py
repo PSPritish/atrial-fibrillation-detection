@@ -1,4 +1,6 @@
+from functools import cache
 import os
+from sympy import per, use
 import yaml
 import sys
 import torch
@@ -25,7 +27,7 @@ def load_config(config_path=None):
     return config["default_config"]
 
 
-def get_dataloaders(dataset_type="combined", config_path=None):
+def get_dataloaders(dataset_type, config_path=None):
     """
     Create train, validation and test dataloaders
 
@@ -51,7 +53,10 @@ def get_dataloaders(dataset_type="combined", config_path=None):
     shuffle_train = dataloader_config.get("shuffle_train", True)
     shuffle_val = dataloader_config.get("shuffle_val", False)
     shuffle_test = dataloader_config.get("shuffle_test", False)
-
+    prefetch_factor = dataloader_config.get("prefetch_factor", 2)
+    persistent_workers = dataloader_config.get("persistent_workers", True)
+    use_cache = dataloader_config.get("use_cache", False)
+    cache_size = dataloader_config.get("cache_size", 2000)
     # Get transforms
     transforms = get_transforms()
 
@@ -67,7 +72,6 @@ def get_dataloaders(dataset_type="combined", config_path=None):
         raise ValueError(
             f"Invalid dataset type: {dataset_type}. Must be one of {list(dataset_classes.keys())}"
         )
-
     # Get the appropriate dataset class
     Dataset = dataset_classes[dataset_type]
 
@@ -75,6 +79,10 @@ def get_dataloaders(dataset_type="combined", config_path=None):
     train_dataset = Dataset(
         mode="train", transforms=transforms, config_path=config_path
     )
+
+    if use_cache:
+        train_dataset = CachedDataset(train_dataset, cache_size)
+
     val_dataset = Dataset(mode="val", transforms=transforms, config_path=config_path)
     test_dataset = Dataset(mode="test", transforms=transforms, config_path=config_path)
 
@@ -86,6 +94,8 @@ def get_dataloaders(dataset_type="combined", config_path=None):
         num_workers=num_workers,
         pin_memory=pin_memory,
         drop_last=drop_last_train,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=persistent_workers,
     )
 
     val_loader = DataLoader(
@@ -94,6 +104,8 @@ def get_dataloaders(dataset_type="combined", config_path=None):
         shuffle=shuffle_val,
         num_workers=num_workers,
         pin_memory=pin_memory,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=persistent_workers,
     )
 
     test_loader = DataLoader(
@@ -102,9 +114,33 @@ def get_dataloaders(dataset_type="combined", config_path=None):
         shuffle=shuffle_test,
         num_workers=num_workers,
         pin_memory=pin_memory,
+        prefetch_factor=prefetch_factor,
+        persistent_workers=persistent_workers,
     )
 
     return {"train": train_loader, "val": val_loader, "test": test_loader}
+
+
+class CachedDataset(torch.utils.data.Dataset):
+    def __init__(self, dataset, cache_size=2000):
+        self.dataset = dataset
+        self.cache = {}
+        self.cache_size = min(cache_size, len(dataset))
+
+    def __getitem__(self, idx):
+        if idx in self.cache:
+            return self.cache[idx]
+
+        item = self.dataset[idx]
+
+        # Only cache if we haven't reached capacity
+        if len(self.cache) < self.cache_size:
+            self.cache[idx] = item
+
+        return item
+
+    def __len__(self):
+        return len(self.dataset)
 
 
 if __name__ == "__main__":

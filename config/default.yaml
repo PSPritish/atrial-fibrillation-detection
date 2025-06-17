@@ -15,12 +15,16 @@ default_config:
     num_classes: 1
     augmentation: true
     dataloader:
-      num_workers: 4
+      num_workers: 6
       pin_memory: true
       drop_last_train: true
       shuffle_train: true
       shuffle_val: false
       shuffle_test: false
+      prefetch_factor: 2
+      persistent_workers: true
+      use_cache: true
+      cache_size: 1000
   logging:
     log_dir: "./logs"
     save_model: true

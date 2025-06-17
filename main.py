@@ -71,6 +71,7 @@ def main():
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
 
+    # model = torch.compile(model)  # Compile the model for better performance doesn't work with complex
     # Log model architecture to wandb
     wandb.watch(model, log="all")
 
