@@ -1,7 +1,6 @@
 from utils.model_summary import model_summary
 from models.complex_resnet import complex_resnet18
 from data.dataloader import load_config
-from models.resnet import AFResNet
 from torchvision import models
 import torch
 

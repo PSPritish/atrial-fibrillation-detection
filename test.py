@@ -8,9 +8,7 @@ from sklearn.metrics import confusion_matrix, classification_report
 import argparse
 import os
 from torchvision import models  # Add this import
-
 from data.dataloader import get_dataloaders, load_config
-from models.resnet import AFResNet
 from models.complex_resnet import complex_resnet18
 
 
