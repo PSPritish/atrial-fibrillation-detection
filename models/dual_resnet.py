@@ -17,6 +17,16 @@ class DualResNet(nn.Module):
             self.imaginary_resnet.fc.in_features, num_classes
         )
 
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
     def forward(self, x):
         # Handle both complex tensor and tensor with extra dimension for real/imag parts
         if x.dim() == 5:  # When using DataParallel, complex tensor becomes [B, C, H, W, 2]

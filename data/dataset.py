@@ -565,4 +565,19 @@ class ComplexDataset(Dataset):
 
         # # Stack channels to form the final complex image
         # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        # ------------------------GADF + i GASF --------------------------------------
+        # Create a complex tensor using GADF as real part and GASF as imaginary part
+        # complex_r = torch.complex(gadf_image[0], gasf_image[0])
+        # complex_g = torch.complex(gadf_image[1], gasf_image
+        # complex_b = torch.complex(gadf_image[2], gasf_image[2])
+        # Stack channels to form the final complex image
+        # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        # ------------------------GASF + i GASF --------------------------------------
+        # Create a complex tensor using GASF as real part and GASF as imaginary part
+        # complex_r = torch.complex(gasf_image[0], gasf_image[
+        # complex_g = torch.complex(gasf_image[1], gasf_image[1])
+        # complex_b = torch.complex(gasf_image[2], gasf_image[
+        # Stack channels to form the final complex image
+        # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
+        
         return complex_image, label

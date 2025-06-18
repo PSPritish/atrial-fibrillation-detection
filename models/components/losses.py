@@ -26,7 +26,7 @@ class FocalLoss(nn.Module):
 class ComplexMagnitudeAndPhaseLoss(nn.Module):
     """Loss that considers both magnitude and phase of complex outputs"""
 
-    def __init__(self, phase_weight=0.3, reduction="mean"):
+    def __init__(self, phase_weight=0.5, reduction="mean"):
         super(ComplexMagnitudeAndPhaseLoss, self).__init__()
         self.reduction = reduction
         self.phase_weight = phase_weight  # Weight for the phase component
