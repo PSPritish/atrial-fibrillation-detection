@@ -71,8 +71,8 @@ def main():
     # Create model directly
     # model = complex_resnet18(config)
     # model = AFResNet(config)
-    # model = DualResNet(config["data"]["num_classes"])
-    model = DualResNetCF(config["data"]["num_classes"])
+    model = DualResNet(config["data"]["num_classes"])
+    # model = DualResNetCF(config["data"]["num_classes"])
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
@@ -82,8 +82,8 @@ def main():
     wandb.watch(model, log="all")
 
     # Set up simple loss function and optimizer
-    criterion = nn.BCEWithLogitsLoss()
-    # criterion = ComplexMagnitudeAndPhaseLoss()
+    # criterion = nn.BCEWithLogitsLoss()
+    criterion = ComplexMagnitudeAndPhaseLoss()
 
     # Convert learning_rate to float if it's a string
     learning_rate = float(config.get("training", {}).get("learning_rate", 0.001))

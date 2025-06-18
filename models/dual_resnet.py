@@ -18,7 +18,18 @@ class DualResNet(nn.Module):
         )
 
     def forward(self, x):
-        real_output = self.real_resnet(x.real)
-        imaginary_output = self.imaginary_resnet(x.imag)
-        complex_output = torch.complex(real_output, imaginary_output)
-        return complex_output
+        # Handle both complex tensor and tensor with extra dimension for real/imag parts
+        if x.dim() == 5:  # When using DataParallel, complex tensor becomes [B, C, H, W, 2]
+            real_part = x[..., 0]  # Extract real component
+            imag_part = x[..., 1]  # Extract imaginary component
+        else:  # Standard complex tensor format
+            real_part = x.real
+            imag_part = x.imag
+
+        real_output = self.real_resnet(real_part)
+        imaginary_output = self.imaginary_resnet(imag_part)
+
+        # Instead of returning a complex tensor, return a concatenated tensor
+        # where the last dimension contains real and imaginary parts
+        # This is compatible with DataParallel
+        return torch.stack([real_output, imaginary_output], dim=-1)

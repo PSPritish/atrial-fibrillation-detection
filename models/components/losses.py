@@ -32,17 +32,27 @@ class ComplexMagnitudeAndPhaseLoss(nn.Module):
         self.phase_weight = phase_weight  # Weight for the phase component
 
     def forward(self, complex_outputs, targets):
-        # This gets complex outputs BEFORE magnitude is taken
-        # For use with a modified model that preserves complex values
-
-        # Magnitude component (primary signal strength)
-        magnitude = torch.abs(complex_outputs)
+        # Handle both standard complex tensors and tensors with extra dimension
+        if not torch.is_complex(complex_outputs) and complex_outputs.dim() > targets.dim():
+            # For DataParallel case with shape [batch, features, 2]
+            # Extract magnitude manually from real and imaginary parts
+            real_part = complex_outputs[..., 0] 
+            imag_part = complex_outputs[..., 1]
+            magnitude = torch.sqrt(real_part**2 + imag_part**2)
+            
+            # Calculate phase manually
+            phase = torch.atan2(imag_part, real_part)
+        else:
+            # Standard complex tensor
+            magnitude = torch.abs(complex_outputs)
+            phase = torch.angle(complex_outputs)
+    
+        # Apply loss on correctly calculated magnitude
         magnitude_loss = nn.BCEWithLogitsLoss(reduction=self.reduction)(
             magnitude, targets
         )
 
         # Phase component (directional information)
-        phase = torch.angle(complex_outputs)
         # For positive samples, phase should be clustered (low variance)
         # For negative samples, phase is less important
 
