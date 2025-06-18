@@ -11,6 +11,7 @@ from models.custom_resnet import resnet18
 from models.dual_resnet import DualResNet
 from models.dual_resnet_CF import DualResNetCF
 from models.hybrid_resnet import hybrid_resnet18
+from models.hybrid_resnet_RO import hybrid_resnet_RO_18
 from train import Trainer
 from models.complex_resnet import complex_resnet18
 from torchvision import models
@@ -74,7 +75,8 @@ def main():
     # model = AFResNet(config)
     # model = DualResNet(config["data"]["num_classes"])
     # model = DualResNetCF(config["data"]["num_classes"])
-    model = hybrid_resnet18()
+    # model = hybrid_resnet18()
+    model = hybrid_resnet_RO_18()
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
