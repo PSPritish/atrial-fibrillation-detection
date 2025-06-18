@@ -2,11 +2,11 @@ import os
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
 from torchvision import transforms as T
 from data.dataset import ComplexDataset
 from data.transforms import get_transforms
 import argparse
+from torchvision.io import read_image
 
 
 def verify_image_loading(mode="train", num_samples=3):
@@ -31,8 +31,8 @@ def verify_image_loading(mode="train", num_samples=3):
         # Print the paths to verify
         print(f"GADF Path: {gadf_path}")
         print(f"GASF Path: {gasf_path}")
-        gadf_image_orig = Image.open(gadf_path).convert("RGB")
-        gasf_image_orig = Image.open(gasf_path).convert("RGB")
+        gadf_image_orig = read_image(gadf_path)  # returns tensor in [C,H,W] format
+        gasf_image_orig = read_image(gasf_path)
 
         # Apply transforms without normalization
         if transforms:
@@ -69,10 +69,14 @@ def verify_image_loading(mode="train", num_samples=3):
         imag_np = imag_part.permute(1, 2, 0).numpy()
 
         # Plot images
-        axes[i, 0].imshow(np.array(gadf_image_orig))
+        axes[i, 0].imshow(
+            gadf_image_orig.permute(1, 2, 0).numpy()
+        )  # Convert [C,H,W] to [H,W,C]
         axes[i, 0].set_title(f"Original GADF (Label: {label})")
 
-        axes[i, 1].imshow(np.array(gasf_image_orig))
+        axes[i, 1].imshow(
+            gasf_image_orig.permute(1, 2, 0).numpy()
+        )  # Convert [C,H,W] to [H,W,C]
         axes[i, 1].set_title("Original GASF")
 
         axes[i, 2].imshow(np.clip(gadf_np, 0, 1))

@@ -38,7 +38,7 @@ class ComplexBasicBlock(nn.Module):
         identity = x
 
         out = self.relu1(self.bn1(self.conv1(x)))
-        out = self.relu1(self.bn2(self.conv2(out)))
+        out = self.relu2(self.bn2(self.conv2(out)))
 
         if self.downsample is not None:
             identity = self.downsample(x)
@@ -193,18 +193,6 @@ class ComplexResNet(nn.Module):
             real_part = x[..., 0]
             imag_part = x[..., 1]
             x = torch.complex(real_part, imag_part)
-
-        # If already complex tensor, use it directly
-        if torch.is_complex(x):
-            # For 3-channel complex input, no conversion needed
-            pass
-        else:
-            # For real tensor, convert appropriately
-            # (this part can be modified based on your needs)
-            real_part = x[:, 0:1, :, :]
-            imag_part = x[:, 1:2, :, :]
-            x = torch.complex(real_part.squeeze(1), imag_part.squeeze(1))
-            x = x.unsqueeze(1)  # Make shape [batch, 1, height, width]
 
         x = self.conv1(x)
         x = self.bn1(x)

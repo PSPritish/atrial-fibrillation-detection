@@ -59,36 +59,14 @@ class Trainer:
 
                 self.optimizer.zero_grad()
                 outputs = self.model(inputs)
-                
-                # For calculating gradients properly with DataParallel
-                if isinstance(self.model, torch.nn.DataParallel):
-                    # Extract components for loss calculation 
-                    if outputs.dim() > labels.dim() + 1:
-                        real_part = outputs[..., 0]
-                        imag_part = outputs[..., 1]
-                        # Calculate magnitude for loss
-                        magnitude = torch.sqrt(real_part**2 + imag_part**2)
-                        loss = self.criterion(magnitude, labels.unsqueeze(1))
-                    else:
-                        loss = self.criterion(outputs, labels.unsqueeze(1))
-                else:
-                    # Original behavior for single GPU
-                    loss = self.criterion(outputs, labels.unsqueeze(1))
-                
+                loss = self.criterion(outputs, labels.unsqueeze(1))
                 loss.backward()
                 self.optimizer.step()
                 train_loss += loss.item() * inputs.size(0)
 
                 # Calculate training accuracy
-                # Get magnitude of complex outputs (regardless of tensor format)
-                if outputs.dim() > labels.dim() + 1:
-                    real_part = outputs[..., 0]
-                    imag_part = outputs[..., 1]
-                    magnitude = torch.sqrt(real_part**2 + imag_part**2)
-                else:
-                    magnitude = torch.abs(outputs)
-                    
-                predicted = (torch.sigmoid(magnitude) > 0.5).float()
+                # outputs = torch.abs(outputs) # Get magnitude of complex outputs
+                predicted = (torch.sigmoid(outputs) > 0.5).float()
                 train_correct += (predicted.squeeze() == labels).sum().item()
                 train_total += labels.size(0)
                 train_it.set_postfix(
@@ -116,27 +94,12 @@ class Trainer:
                         labels.to(self.device).float(),
                     )
                     outputs = self.model(inputs)
-                    
-                    # Handle complex outputs for loss
-                    if outputs.dim() > labels.dim() + 1:
-                        real_part = outputs[..., 0]
-                        imag_part = outputs[..., 1]
-                        magnitude = torch.sqrt(real_part**2 + imag_part**2)
-                        loss = self.criterion(magnitude, labels.unsqueeze(1))
-                    else:
-                        loss = self.criterion(outputs, labels.unsqueeze(1))
-                        
+                    loss = self.criterion(outputs, labels.unsqueeze(1))
                     val_loss += loss.item() * inputs.size(0)
 
                     # Store predictions and labels for metrics
-                    # Get magnitude for predictions
-                    if outputs.dim() > labels.dim() + 1:
-                        real_part = outputs[..., 0]
-                        imag_part = outputs[..., 1]
-                        magnitude = torch.sqrt(real_part**2 + imag_part**2)
-                    else:
-                        magnitude = torch.abs(outputs)
-                    predicted = (torch.sigmoid(magnitude) > 0.5).float()
+                    # outputs = torch.abs(outputs) # Get magnitude of complex outputs
+                    predicted = (torch.sigmoid(outputs) > 0.5).float()
                     # Safely handle predictions regardless of batch size
                     pred_np = predicted.cpu().numpy().reshape(-1)  # Flatten to 1D array
                     all_preds.extend(pred_np)

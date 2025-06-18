@@ -2,7 +2,7 @@ import os
 import torch
 from torch.utils.data import Dataset
 import numpy as np
-from PIL import Image
+from torchvision.io import read_image
 from torchvision import transforms as T
 import yaml
 
@@ -88,29 +88,32 @@ class CombinedDataset(Dataset):
 
     # The rest of your methods remain the same
     def _compute_stats(self, image_paths, transform):
-        # Existing implementation...
         means, stds = [], []
         for img_path in image_paths:
             try:
-                img = Image.open(img_path).convert("RGB")
+                # Replace Image.open with read_image
+                img = read_image(img_path)
+
+                # Convert to float (0-1 range)
+                img = img.float() / 255.0
+
                 if transform:
-                    # If transform contains ToTensor(), this already gives us a tensor
                     img_tensor = transform(img)
                 else:
-                    # Only use separate ToTensor if no transform provided
-                    to_tensor = T.ToTensor()
-                    img_tensor = to_tensor(img)
+                    img_tensor = img  # Already a tensor, no need for ToTensor
 
                 means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
                 stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
             except Exception as e:
                 print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
                 continue
+
         if not means:
             print(
                 "Warning: No valid images for stats computation, using default mean/std"
             )
             return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
         return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
@@ -118,8 +121,14 @@ class CombinedDataset(Dataset):
 
     def __getitem__(self, idx):
         gadf_path, gasf_path, label = self.data[idx]
-        gadf_image = Image.open(gadf_path).convert("RGB")
-        gasf_image = Image.open(gasf_path).convert("RGB")
+
+        # Replace Image.open with read_image
+        gadf_image = read_image(gadf_path)
+        gasf_image = read_image(gasf_path)
+
+        # Convert to float first if needed
+        gadf_image = gadf_image.float() / 255.0
+        gasf_image = gasf_image.float() / 255.0
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
@@ -216,29 +225,32 @@ class GASFDataset(Dataset):
 
     # The rest of your methods remain the same
     def _compute_stats(self, image_paths, transform):
-        # Existing implementation...
         means, stds = [], []
         for img_path in image_paths:
             try:
-                img = Image.open(img_path).convert("RGB")
+                # Replace Image.open with read_image
+                img = read_image(img_path)
+
+                # Convert to float (0-1 range)
+                img = img.float() / 255.0
+
                 if transform:
-                    # If transform contains ToTensor(), this already gives us a tensor
                     img_tensor = transform(img)
                 else:
-                    # Only use separate ToTensor if no transform provided
-                    to_tensor = T.ToTensor()
-                    img_tensor = to_tensor(img)
+                    img_tensor = img  # Already a tensor, no need for ToTensor
 
                 means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
                 stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
             except Exception as e:
                 print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
                 continue
+
         if not means:
             print(
                 "Warning: No valid images for stats computation, using default mean/std"
             )
             return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
         return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
@@ -246,28 +258,22 @@ class GASFDataset(Dataset):
 
     def __getitem__(self, idx):
         gadf_path, gasf_path, label = self.data[idx]
-        gadf_image = Image.open(gadf_path).convert("RGB")
-        gasf_image = Image.open(gasf_path).convert("RGB")
+
+        # Replace Image.open with read_image
+        gadf_image = read_image(gadf_path)
+        gasf_image = read_image(gasf_path)
+
+        # Convert to float first if needed
+        gadf_image = gadf_image.float() / 255.0
+        gasf_image = gasf_image.float() / 255.0
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
             gasf_image = self.transforms(gasf_image)
 
-        # gadf_image = T.functional.normalize(
-        #     gadf_image, mean=self.gadf_mean, std=self.gadf_std
-        # )
         gasf_image = T.functional.normalize(
             gasf_image, mean=self.gasf_mean, std=self.gasf_std
         )
-        # gadf_grayscale = T.functional.rgb_to_grayscale(
-        #     gadf_image, num_output_channels=1
-        # )
-        # gasf_grayscale = T.functional.rgb_to_grayscale(
-        #     gasf_image, num_output_channels=1
-        # )
-        # zero_chanel = torch.zeros_like(gadf_grayscale)
-
-        # modified_image = torch.cat((gadf_grayscale, gasf_grayscale, zero_chanel), dim=0)
         return gasf_image, label
 
 
@@ -352,29 +358,32 @@ class GADFDataset(Dataset):
 
     # The rest of your methods remain the same
     def _compute_stats(self, image_paths, transform):
-        # Existing implementation...
         means, stds = [], []
         for img_path in image_paths:
             try:
-                img = Image.open(img_path).convert("RGB")
+                # Replace Image.open with read_image
+                img = read_image(img_path)
+
+                # Convert to float (0-1 range)
+                img = img.float() / 255.0
+
                 if transform:
-                    # If transform contains ToTensor(), this already gives us a tensor
                     img_tensor = transform(img)
                 else:
-                    # Only use separate ToTensor if no transform provided
-                    to_tensor = T.ToTensor()
-                    img_tensor = to_tensor(img)
+                    img_tensor = img  # Already a tensor, no need for ToTensor
 
                 means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
                 stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
             except Exception as e:
                 print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
                 continue
+
         if not means:
             print(
                 "Warning: No valid images for stats computation, using default mean/std"
             )
             return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
         return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
@@ -382,8 +391,14 @@ class GADFDataset(Dataset):
 
     def __getitem__(self, idx):
         gadf_path, gasf_path, label = self.data[idx]
-        gadf_image = Image.open(gadf_path).convert("RGB")
-        gasf_image = Image.open(gasf_path).convert("RGB")
+
+        # Replace Image.open with read_image
+        gadf_image = read_image(gadf_path)
+        gasf_image = read_image(gasf_path)
+
+        # Convert to float first if needed
+        gadf_image = gadf_image.float() / 255.0
+        gasf_image = gasf_image.float() / 255.0
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
@@ -476,29 +491,32 @@ class ComplexDataset(Dataset):
 
     # The rest of your methods remain the same
     def _compute_stats(self, image_paths, transform):
-        # Existing implementation...
         means, stds = [], []
         for img_path in image_paths:
             try:
-                img = Image.open(img_path).convert("RGB")
+                # Replace Image.open with read_image
+                img = read_image(img_path)
+
+                # Convert to float (0-1 range)
+                img = img.float() / 255.0
+
                 if transform:
-                    # If transform contains ToTensor(), this already gives us a tensor
                     img_tensor = transform(img)
                 else:
-                    # Only use separate ToTensor if no transform provided
-                    to_tensor = T.ToTensor()
-                    img_tensor = to_tensor(img)
+                    img_tensor = img  # Already a tensor, no need for ToTensor
 
                 means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
                 stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
             except Exception as e:
                 print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
                 continue
+
         if not means:
             print(
                 "Warning: No valid images for stats computation, using default mean/std"
             )
             return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+
         return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
@@ -507,8 +525,8 @@ class ComplexDataset(Dataset):
     def __getitem__(self, idx):
 
         gadf_path, gasf_path, label = self.data[idx]
-        gadf_image = Image.open(gadf_path).convert("RGB")
-        gasf_image = Image.open(gasf_path).convert("RGB")
+        gadf_image = read_image(gadf_path)
+        gasf_image = read_image(gasf_path)
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)

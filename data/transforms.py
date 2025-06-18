@@ -1,6 +1,7 @@
 import yaml
 import os
 import torchvision.transforms as T
+import torch
 
 
 def get_transforms():
@@ -32,8 +33,8 @@ def get_transforms():
     # Create and return the transforms
     return T.Compose(
         [
+            T.ConvertImageDtype(torch.float32),
             T.Resize(image_size),
-            T.ToTensor(),
         ]
     )
 
