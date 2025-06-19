@@ -203,9 +203,9 @@ class GASFDataset(Dataset):
         self.gasf_mean, self.gasf_std = self._compute_stats(
             [s[1] for s in self.data], transforms
         )
-        self.gadf_mean, self.gadf_std = self._compute_stats(
-            [s[0] for s in self.data], transforms
-        )
+        # self.gadf_mean, self.gadf_std = self._compute_stats(
+        #     [s[0] for s in self.data], transforms
+        # )
 
         self.pos_weight = cnt[0] / cnt[1]
 
@@ -260,15 +260,15 @@ class GASFDataset(Dataset):
         gadf_path, gasf_path, label = self.data[idx]
 
         # Replace Image.open with read_image
-        gadf_image = read_image(gadf_path)
+        # gadf_image = read_image(gadf_path)
         gasf_image = read_image(gasf_path)
 
         # Convert to float first if needed
-        gadf_image = gadf_image.float() / 255.0
+        # gadf_image = gadf_image.float() / 255.0
         gasf_image = gasf_image.float() / 255.0
 
         if self.transforms:
-            gadf_image = self.transforms(gadf_image)
+            # gadf_image = self.transforms(gadf_image)
             gasf_image = self.transforms(gasf_image)
 
         gasf_image = T.functional.normalize(
@@ -333,9 +333,9 @@ class GADFDataset(Dataset):
                 self.data.append((gadf_image_path, gasf_image_path, label))
 
         # Compute stats safely
-        self.gasf_mean, self.gasf_std = self._compute_stats(
-            [s[1] for s in self.data], transforms
-        )
+        # self.gasf_mean, self.gasf_std = self._compute_stats(
+        #     [s[1] for s in self.data], transforms
+        # )
         self.gadf_mean, self.gadf_std = self._compute_stats(
             [s[0] for s in self.data], transforms
         )
@@ -394,15 +394,15 @@ class GADFDataset(Dataset):
 
         # Replace Image.open with read_image
         gadf_image = read_image(gadf_path)
-        gasf_image = read_image(gasf_path)
+        # gasf_image = read_image(gasf_path)
 
         # Convert to float first if needed
         gadf_image = gadf_image.float() / 255.0
-        gasf_image = gasf_image.float() / 255.0
+        # gasf_image = gasf_image.float() / 255.0
 
         if self.transforms:
             gadf_image = self.transforms(gadf_image)
-            gasf_image = self.transforms(gasf_image)
+            # gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
             gadf_image, mean=self.gadf_mean, std=self.gadf_std
@@ -579,5 +579,5 @@ class ComplexDataset(Dataset):
         # complex_b = torch.complex(gasf_image[2], gasf_image[
         # Stack channels to form the final complex image
         # complex_image = torch.stack([complex_r, complex_g, complex_b], dim=0)
-        
+
         return complex_image, label

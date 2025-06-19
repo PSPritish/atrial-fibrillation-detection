@@ -69,16 +69,16 @@ def main():
     # }
 
     # Get data loaders (complex data for complex model)
-    dataloaders = get_dataloaders(dataset_type="complex")
+    dataloaders = get_dataloaders(dataset_type="gadf")
 
     # Create model directly
     # model = complex_resnet18(config)
-    # model = AFResNet(config)
+    model = resnet18()
     # model = DualResNet(config["data"]["num_classes"])
     # model = DualResNetCF(config["data"]["num_classes"])
     # model = hybrid_resnet18()
     # model = hybrid_resnet_RO_18()
-    model = dual_stream_phase_mag_resnet_18()
+    # model = dual_stream_phase_mag_resnet_18()
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
