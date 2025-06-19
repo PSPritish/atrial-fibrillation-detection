@@ -3,18 +3,21 @@ import torch.nn as nn
 
 
 class ModReLU(nn.Module):
-    def __init__(self, num_features):
-        super().__init__()
+    def __init__(self, num_features, inplace=False):
+        super(ModReLU, self).__init__()
         self.bias = nn.Parameter(torch.zeros(num_features))
+        self.relu = nn.ReLU(inplace=inplace)  # Create the ReLU module
 
-    def forward(self, z):
-        # z: (B, C, H, W) — complex tensor
-        magnitude = torch.abs(z)  # |z|, shape: (B, C, H, W)
-        phase = z / (magnitude + 1e-8)  # z / |z|, avoid div-by-zero
-        bias = self.bias.view(1, -1, 1, 1)  # reshape bias for broadcasting
+    def forward(self, x):
+        magnitude = torch.abs(x)
+        phase = x / (magnitude + 1e-8)
 
-        # relu(|z| + b)
-        mod_relu_out = torch.relu(magnitude + bias) * phase
+        # Reshape bias for proper broadcasting across spatial dimensions
+        # If x has shape [batch, channels, height, width]
+        # This gives bias shape [1, channels, 1, 1]
+        bias_reshaped = self.bias.view(1, -1, 1, 1)
+
+        mod_relu_out = self.relu(magnitude + bias_reshaped) * phase
         return mod_relu_out
 
 

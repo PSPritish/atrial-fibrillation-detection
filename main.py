@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from data.dataloader import get_dataloaders
+from models.DualStreamPhaseMagNet import dual_stream_phase_mag_resnet_18
 from models.complex_efficientnet import complex_efficientnet_b0
 from models.components.losses import ComplexMagnitudeAndPhaseLoss
 from models.custom_resnet import resnet18
@@ -76,7 +77,8 @@ def main():
     # model = DualResNet(config["data"]["num_classes"])
     # model = DualResNetCF(config["data"]["num_classes"])
     # model = hybrid_resnet18()
-    model = hybrid_resnet_RO_18()
+    # model = hybrid_resnet_RO_18()
+    model = dual_stream_phase_mag_resnet_18()
     if torch.cuda.device_count() > 1:
         print(f"Using {torch.cuda.device_count()} GPUs!")
         model = nn.DataParallel(model)
