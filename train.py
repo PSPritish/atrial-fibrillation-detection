@@ -178,9 +178,6 @@ class Trainer:
             # Save best model
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                self.save_model(epoch)
-                print(f"✓ Model saved (val_loss: {val_loss:.4f})")
-
                 # Log best model to wandb
                 if self.use_wandb:
                     save_path = self.config.get("logging", {}).get(
@@ -190,6 +187,8 @@ class Trainer:
                         save_path, f"best_model_epoch_{epoch+1}.pth"
                     )
                     # wandb.save(model_path) # to save models online
+            self.save_model(epoch)
+            print(f"✓ Model saved (val_loss: {val_loss:.4f})")
 
             # Step the scheduler based on validation loss
             if self.scheduler is not None:
