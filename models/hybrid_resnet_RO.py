@@ -163,11 +163,6 @@ class HybridResNetRO(nn.Module):
         else:
             real_part = x.real
             imag_part = x.imag
-        if x.dtype != torch.complex64:
-            raise ValueError(
-                f"Input should be a complex tensor, got {x.dtype}. "
-                "Ensure the input is in complex format."
-            )
         out_real = self.conv1_real(real_part)
         out_imag = self.conv1_imag(imag_part)
 
