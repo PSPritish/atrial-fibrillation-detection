@@ -20,6 +20,7 @@ class Trainer:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
         self.use_wandb = config.get("use_wandb", False)
+        self.model_name = config.get("model", {}).get("architecture", "model")
 
     def train(self):
         """Run training loop with validation and return history"""
@@ -184,7 +185,7 @@ class Trainer:
                         "model_save_path", "./saved_models"
                     )
                     model_path = os.path.join(
-                        save_path, f"best_model_epoch_{epoch+1}.pth"
+                        save_path, f"{self.model_name}_model_epoch_{epoch+1}.pth"
                     )
                     # wandb.save(model_path) # to save models online
             self.save_model(epoch)
