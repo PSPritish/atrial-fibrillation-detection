@@ -33,26 +33,6 @@ from models.complex_resnet import complex_resnet18
 from models.DualStreamPhaseMagNet import dual_stream_phase_mag_resnet_18
 
 
-def load_model(model_path, model, device="cuda"):
-    """Load a trained model"""
-    # Load state dict
-    state_dict = torch.load(model_path, map_location=device)
-
-    # Handle DataParallel prefix if needed
-    # new_state_dict = {}
-    # for key, value in state_dict.items():
-    #     name = key[7:] if key.startswith("module.") else key  # Remove 'module.' prefix
-    #     new_state_dict[name] = value
-
-    # model.load_state_dict(new_state_dict)
-    model = torch.nn.DataParallel(model)
-    model.load_state_dict(state_dict)
-    model.to(device)
-    model.eval()
-
-    return model
-
-
 def test_model(model, test_loader, device):
     """Test model and return predictions, probabilities, and true labels"""
     model.eval()
@@ -196,52 +176,52 @@ def plot_pr_curve(metrics):
     plt.show()
 
 
-def print_summary(metrics, model_type, dataset_type):
-    """Print summary of model performance"""
-    print("\n=== Model Performance Summary ===\n")
-    print(f"Model: {model_type}")
-    print(f"Dataset: {dataset_type}")
-    print(f"\nTest Accuracy: {metrics['accuracy']:.4f}")
-    print(f"F1 Score: {metrics['f1']:.4f}")
-    print(f"ROC AUC: {metrics['roc_auc']:.4f}")
-    print(f"PR AUC: {metrics['pr_auc']:.4f}")
-    print("\nClinical Metrics:")
-    print(f"Sensitivity (Recall): {metrics['recall']:.4f}")
-    print(f"Specificity: {metrics['specificity']:.4f}")
-    print(f"Precision: {metrics['precision']:.4f}")
-    print(f"Negative Predictive Value: {metrics['npv']:.4f}")
+# def print_summary(metrics, model_type, dataset_type):
+#     """Print summary of model performance"""
+#     print("\n=== Model Performance Summary ===\n")
+#     print(f"Model: {model_type}")
+#     print(f"Dataset: {dataset_type}")
+#     print(f"\nTest Accuracy: {metrics['accuracy']:.4f}")
+#     print(f"F1 Score: {metrics['f1']:.4f}")
+#     print(f"ROC AUC: {metrics['roc_auc']:.4f}")
+#     print(f"PR AUC: {metrics['pr_auc']:.4f}")
+#     print("\nClinical Metrics:")
+#     print(f"Sensitivity (Recall): {metrics['recall']:.4f}")
+#     print(f"Specificity: {metrics['specificity']:.4f}")
+#     print(f"Precision: {metrics['precision']:.4f}")
+#     print(f"Negative Predictive Value: {metrics['npv']:.4f}")
 
-    # Calculate error rates
-    fp = metrics["confusion_matrix"][0, 1]
-    fn = metrics["confusion_matrix"][1, 0]
-    total = np.sum(metrics["confusion_matrix"])
-    print(f"\nFalse Positive Rate: {fp/total:.4f}")
-    print(f"False Negative Rate: {fn/total:.4f}")
+#     # Calculate error rates
+#     fp = metrics["confusion_matrix"][0, 1]
+#     fn = metrics["confusion_matrix"][1, 0]
+#     total = np.sum(metrics["confusion_matrix"])
+#     print(f"\nFalse Positive Rate: {fp/total:.4f}")
+#     print(f"False Negative Rate: {fn/total:.4f}")
 
-    print("\n=== Conclusion ===\n")
-    if metrics["f1"] > 0.9:
-        print("The model performs excellently on the test set.")
-    elif metrics["f1"] > 0.8:
-        print("The model performs well on the test set.")
-    elif metrics["f1"] > 0.7:
-        print("The model performs adequately on the test set.")
-    else:
-        print("The model performance needs improvement.")
+#     print("\n=== Conclusion ===\n")
+#     if metrics["f1"] > 0.9:
+#         print("The model performs excellently on the test set.")
+#     elif metrics["f1"] > 0.8:
+#         print("The model performs well on the test set.")
+#     elif metrics["f1"] > 0.7:
+#         print("The model performs adequately on the test set.")
+#     else:
+#         print("The model performance needs improvement.")
 
-    # Suggestions based on metrics
-    print("\nSuggestions:")
-    if metrics["recall"] < 0.8:
-        print(
-            "- Consider techniques to improve recall/sensitivity to detect more AF cases."
-        )
-    if metrics["precision"] < 0.8:
-        print("- Work on reducing false positives to improve precision.")
-    if metrics["roc_auc"] < 0.85:
-        print("- The model's discriminative ability could be improved.")
-    if metrics["accuracy"] > 0.85 and metrics["f1"] < 0.8:
-        print(
-            "- The dataset might be imbalanced. Consider balanced accuracy or F1 as your primary metric."
-        )
+#     # Suggestions based on metrics
+#     print("\nSuggestions:")
+#     if metrics["recall"] < 0.8:
+#         print(
+#             "- Consider techniques to improve recall/sensitivity to detect more AF cases."
+#         )
+#     if metrics["precision"] < 0.8:
+#         print("- Work on reducing false positives to improve precision.")
+#     if metrics["roc_auc"] < 0.85:
+#         print("- The model's discriminative ability could be improved.")
+#     if metrics["accuracy"] > 0.85 and metrics["f1"] < 0.8:
+#         print(
+#             "- The dataset might be imbalanced. Consider balanced accuracy or F1 as your primary metric."
+#         )
 
 
 def save_metrics_to_csv(
@@ -257,8 +237,6 @@ def save_metrics_to_csv(
     metrics_to_save = {
         "model_type": model_type,
         "dataset_type": dataset_type,
-        "model_path": model_path,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "accuracy": metrics["accuracy"],
         "precision": metrics["precision"],
         "recall": metrics["recall"],
@@ -267,10 +245,7 @@ def save_metrics_to_csv(
         "npv": metrics["npv"],
         "roc_auc": metrics["roc_auc"],
         "pr_auc": metrics["pr_auc"],
-        "tn": metrics["confusion_matrix"][0, 0],
-        "fp": metrics["confusion_matrix"][0, 1],
-        "fn": metrics["confusion_matrix"][1, 0],
-        "tp": metrics["confusion_matrix"][1, 1],
+        "confusion_matrix": metrics["confusion_matrix"],
     }
 
     # Check if file exists to determine if we need to write headers
@@ -302,20 +277,16 @@ def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Load dataset
     try:
-        dataset_type = "complex"  # Options: "complex", "gasf", "gadf", "combined"
         # Load transformations
         transforms = get_transforms()
-
         # Create datasets
         dataset_type = "complex"  # Options: "complex", "gasf", "gadf", "combined"
-
         dataset_classes = {
             "complex": ComplexDataset,
             "gasf": GASFDataset,
             "gadf": GADFDataset,
             "combined": CombinedDataset,
         }
-
         # Get the appropriate dataset class
         Dataset = dataset_classes[dataset_type]
         test_dataset = Dataset(mode="test", transforms=transforms)
@@ -331,12 +302,23 @@ def main():
         print(f"Error loading dataset: {e}")
         return
 
-    # Load model
     try:
         # Update model path to your best model
-        model = dual_stream_phase_mag_resnet_18()
+        model_name = "dual_stream_phase_mag_resnet_18"
         model_path = "/home/prasad/Desktop/BestModels/dualstream_gasf_igadf.pth"
-        model = load_model(model_path, model, device)
+        model = dual_stream_phase_mag_resnet_18()
+
+        model = torch.nn.DataParallel(model)
+        state_dict = torch.load(model_path, map_location=device)
+        # new_state_dict = {}
+        # for key, value in state_dict.items():
+        #     name = key[7:] if key.startswith("module.") else key  # Remove 'module.' prefix
+        #     new_state_dict[name] = value
+
+        # model.load_state_dict(new_state_dict)
+        model.load_state_dict(state_dict)
+        model = model.to(device)
+        model.eval()
         print(f"Model loaded: {model}")
     except Exception as e:
         print(f"Error loading model: {e}")
@@ -366,26 +348,24 @@ def main():
         return
 
     # Visualizations
-    try:
-        # Plot confusion matrix
-        plot_confusion_matrix(metrics)
+    # try:
+    #     # Plot confusion matrix
+    #     plot_confusion_matrix(metrics)
 
-        # # Plot ROC curve
-        # plot_roc_curve(metrics)
+    #     # # Plot ROC curve
+    #     # plot_roc_curve(metrics)
 
-        # # Plot precision-recall curve
-        # plot_pr_curve(metrics)
+    #     # # Plot precision-recall curve
+    #     # plot_pr_curve(metrics)
 
-        # Print summary
-        print_summary(metrics, model, dataset_type)
-    except Exception as e:
-        print(f"Error in visualization: {e}")
+    #     # Print summary
+    #     print_summary(metrics, model_name, dataset_type)
+    # except Exception as e:
+    #     print(f"Error in visualization: {e}")
 
     # Save metrics to CSV
     try:
-        output_path = save_metrics_to_csv(
-            metrics, "dual_stream_phase_mag_resnet_18", dataset_type, model_path
-        )
+        output_path = save_metrics_to_csv(metrics, model_name, dataset_type, model_path)
     except Exception as e:
         print(f"Error saving metrics to CSV: {e}")
 
