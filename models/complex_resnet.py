@@ -116,8 +116,8 @@ class ComplexResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        self.avgpool = ComplexAdaptiveAvgPool2d((1, 1))
-        self.dropout = ComplexDropout(p=0.5)
+        self.avgpool = ComplexAdaptiveAvgPool2d((1, 1)) 
+        # self.dropout = ComplexDropout(p=0.5)
 
         # For binary classification, use a single output with sigmoid
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -205,7 +205,7 @@ class ComplexResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
-        x = self.dropout(x)
+        # x = self.dropout(x)
 
         # Convert to magnitude for classification
         x = torch.abs(x)

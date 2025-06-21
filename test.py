@@ -31,7 +31,19 @@ from data.dataloader import get_dataloaders
 from models.custom_resnet import resnet18
 from models.complex_resnet import complex_resnet18
 from models.DualStreamPhaseMagNet import dual_stream_phase_mag_resnet_18
+from models.hybrid_resnet import hybrid_resnet18
+from models.hybrid_resnet_RO import hybrid_resnet_RO_18
 
+def load_config(config_path=None):
+    """Load configuration from YAML file"""
+    if config_path is None:
+        # Get the path to the default config
+        config_path = "config/default.yaml"
+
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+
+    return config["default_config"]
 
 def test_model(model, test_loader, device):
     """Test model and return predictions, probabilities, and true labels"""
@@ -231,7 +243,7 @@ def save_metrics_to_csv(
     if output_path is None:
         # Create a timestamp for the filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_path = f"metrics_{model_type}_{dataset_type}_{timestamp}.csv"
+        output_path = f"metrics.csv"
 
     # Extract metrics for saving
     metrics_to_save = {
@@ -276,6 +288,7 @@ def main():
     clear_memory()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # Load dataset
+    config = load_config()
     try:
         # Load transformations
         transforms = get_transforms()
@@ -304,9 +317,13 @@ def main():
 
     try:
         # Update model path to your best model
-        model_name = "dual_stream_phase_mag_resnet_18"
-        model_path = "/home/prasad/Desktop/BestModels/dualstream_gasf_igadf.pth"
-        model = dual_stream_phase_mag_resnet_18()
+        model_name = "Complex ResNet-18 GASF + i GADF"
+        model_path = "saved_models/Complex_Resnet18_GASF_iGADF/Complex_Resnet18_GASF_iGADF_model_epoch_29.pth"
+        # model = resnet18(config)
+        model = complex_resnet18(config)
+        # model = hybrid_resnet18()
+        # model = hybrid_resnet_RO_18()
+        # model = dual_stream_phase_mag_resnet_18()
 
         model = torch.nn.DataParallel(model)
         state_dict = torch.load(model_path, map_location=device)
@@ -319,7 +336,7 @@ def main():
         model.load_state_dict(state_dict)
         model = model.to(device)
         model.eval()
-        print(f"Model loaded: {model}")
+        # print(f"Model loaded: {model}")
     except Exception as e:
         print(f"Error loading model: {e}")
         return
