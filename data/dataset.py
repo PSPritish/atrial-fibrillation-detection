@@ -63,12 +63,12 @@ class CombinedDataset(Dataset):
                 self.data.append((gadf_image_path, gasf_image_path, label))
 
         # Compute stats safely
-        self.gasf_mean, self.gasf_std = self._compute_stats(
-            [s[1] for s in self.data], transforms
-        )
-        self.gadf_mean, self.gadf_std = self._compute_stats(
-            [s[0] for s in self.data], transforms
-        )
+        # self.gasf_mean, self.gasf_std = self._compute_stats(
+        #     [s[1] for s in self.data], transforms
+        # )
+        # self.gadf_mean, self.gadf_std = self._compute_stats(
+        #     [s[0] for s in self.data], transforms
+        # )
 
         self.pos_weight = cnt[0] / cnt[1]
 
@@ -87,34 +87,34 @@ class CombinedDataset(Dataset):
         return config["default_config"]
 
     # The rest of your methods remain the same
-    def _compute_stats(self, image_paths, transform):
-        means, stds = [], []
-        for img_path in image_paths:
-            try:
-                # Replace Image.open with read_image
-                img = read_image(img_path)
+    # def _compute_stats(self, image_paths, transform):
+    #     means, stds = [], []
+    #     for img_path in image_paths:
+    #         try:
+    #             # Replace Image.open with read_image
+    #             img = read_image(img_path)
 
-                # Convert to float (0-1 range)
-                img = img.float() / 255.0
+    #             # Convert to float (0-1 range)
+    #             img = img.float() / 255.0
 
-                if transform:
-                    img_tensor = transform(img)
-                else:
-                    img_tensor = img  # Already a tensor, no need for ToTensor
+    #             if transform:
+    #                 img_tensor = transform(img)
+    #             else:
+    #                 img_tensor = img  # Already a tensor, no need for ToTensor
 
-                means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
-                stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
-            except Exception as e:
-                print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
-                continue
+    #             means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
+    #             stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
+    #         except Exception as e:
+    #             print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
+    #             continue
 
-        if not means:
-            print(
-                "Warning: No valid images for stats computation, using default mean/std"
-            )
-            return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+    #     if not means:
+    #         print(
+    #             "Warning: No valid images for stats computation, using default mean/std"
+    #         )
+    #         return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-        return np.mean(means, axis=0), np.mean(stds, axis=0)
+    #     return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
         return len(self.data)
@@ -135,10 +135,14 @@ class CombinedDataset(Dataset):
             gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
-            gadf_image, mean=self.gadf_mean, std=self.gadf_std
+            gadf_image,
+            mean=[0.19756491, 0.5550784,  0.50753045],
+            std=[0.08108524, 0.10870767, 0.05927933],
         )
         gasf_image = T.functional.normalize(
-            gasf_image, mean=self.gasf_mean, std=self.gasf_std
+            gasf_image,
+            mean=[0.25332475, 0.17397244, 0.43626496],
+            std=[0.03306787, 0.08601908, 0.04909801],
         )
         modified_image = torch.cat((gadf_image, gasf_image), dim=0)
         return modified_image, label
@@ -200,9 +204,9 @@ class GASFDataset(Dataset):
                 self.data.append((gadf_image_path, gasf_image_path, label))
 
         # Compute stats safely
-        self.gasf_mean, self.gasf_std = self._compute_stats(
-            [s[1] for s in self.data], transforms
-        )
+        # self.gasf_mean, self.gasf_std = self._compute_stats(
+        #     [s[1] for s in self.data], transforms
+        # )
         # self.gadf_mean, self.gadf_std = self._compute_stats(
         #     [s[0] for s in self.data], transforms
         # )
@@ -224,34 +228,34 @@ class GASFDataset(Dataset):
         return config["default_config"]
 
     # The rest of your methods remain the same
-    def _compute_stats(self, image_paths, transform):
-        means, stds = [], []
-        for img_path in image_paths:
-            try:
-                # Replace Image.open with read_image
-                img = read_image(img_path)
+    # def _compute_stats(self, image_paths, transform):
+    #     means, stds = [], []
+    #     for img_path in image_paths:
+    #         try:
+    #             # Replace Image.open with read_image
+    #             img = read_image(img_path)
 
-                # Convert to float (0-1 range)
-                img = img.float() / 255.0
+    #             # Convert to float (0-1 range)
+    #             img = img.float() / 255.0
 
-                if transform:
-                    img_tensor = transform(img)
-                else:
-                    img_tensor = img  # Already a tensor, no need for ToTensor
+    #             if transform:
+    #                 img_tensor = transform(img)
+    #             else:
+    #                 img_tensor = img  # Already a tensor, no need for ToTensor
 
-                means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
-                stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
-            except Exception as e:
-                print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
-                continue
+    #             means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
+    #             stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
+    #         except Exception as e:
+    #             print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
+    #             continue
 
-        if not means:
-            print(
-                "Warning: No valid images for stats computation, using default mean/std"
-            )
-            return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+    #     if not means:
+    #         print(
+    #             "Warning: No valid images for stats computation, using default mean/std"
+    #         )
+    #         return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-        return np.mean(means, axis=0), np.mean(stds, axis=0)
+    #     return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
         return len(self.data)
@@ -271,8 +275,15 @@ class GASFDataset(Dataset):
             # gadf_image = self.transforms(gadf_image)
             gasf_image = self.transforms(gasf_image)
 
+        # gadf_image = T.functional.normalize(
+        #     gadf_image,
+        #     mean=[0.19756491, 0.5550784,  0.50753045],
+        #     std=[0.08108524, 0.10870767, 0.05927933],
+        # )
         gasf_image = T.functional.normalize(
-            gasf_image, mean=self.gasf_mean, std=self.gasf_std
+            gasf_image,
+            mean=[0.25332475, 0.17397244, 0.43626496],
+            std=[0.03306787, 0.08601908, 0.04909801],
         )
         return gasf_image, label
 
@@ -336,9 +347,9 @@ class GADFDataset(Dataset):
         # self.gasf_mean, self.gasf_std = self._compute_stats(
         #     [s[1] for s in self.data], transforms
         # )
-        self.gadf_mean, self.gadf_std = self._compute_stats(
-            [s[0] for s in self.data], transforms
-        )
+        # self.gadf_mean, self.gadf_std = self._compute_stats(
+        #     [s[0] for s in self.data], transforms
+        # )
 
         self.pos_weight = cnt[0] / cnt[1]
 
@@ -357,34 +368,34 @@ class GADFDataset(Dataset):
         return config["default_config"]
 
     # The rest of your methods remain the same
-    def _compute_stats(self, image_paths, transform):
-        means, stds = [], []
-        for img_path in image_paths:
-            try:
-                # Replace Image.open with read_image
-                img = read_image(img_path)
+    # def _compute_stats(self, image_paths, transform):
+    #     means, stds = [], []
+    #     for img_path in image_paths:
+    #         try:
+    #             # Replace Image.open with read_image
+    #             img = read_image(img_path)
 
-                # Convert to float (0-1 range)
-                img = img.float() / 255.0
+    #             # Convert to float (0-1 range)
+    #             img = img.float() / 255.0
 
-                if transform:
-                    img_tensor = transform(img)
-                else:
-                    img_tensor = img  # Already a tensor, no need for ToTensor
+    #             if transform:
+    #                 img_tensor = transform(img)
+    #             else:
+    #                 img_tensor = img  # Already a tensor, no need for ToTensor
 
-                means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
-                stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
-            except Exception as e:
-                print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
-                continue
+    #             means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
+    #             stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
+    #         except Exception as e:
+    #             print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
+    #             continue
 
-        if not means:
-            print(
-                "Warning: No valid images for stats computation, using default mean/std"
-            )
-            return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+    #     if not means:
+    #         print(
+    #             "Warning: No valid images for stats computation, using default mean/std"
+    #         )
+    #         return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-        return np.mean(means, axis=0), np.mean(stds, axis=0)
+    #     return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
         return len(self.data)
@@ -405,8 +416,15 @@ class GADFDataset(Dataset):
             # gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
-            gadf_image, mean=self.gadf_mean, std=self.gadf_std
+            gadf_image,
+            mean=[0.19756491, 0.5550784,  0.50753045],
+            std=[0.08108524, 0.10870767, 0.05927933],
         )
+        # gasf_image = T.functional.normalize(
+        #     gasf_image,
+        #     mean=[0.25332475, 0.17397244, 0.43626496],
+        #     std=[0.03306787, 0.08601908, 0.04909801],
+        # )
         return gadf_image, label
 
 
@@ -465,13 +483,13 @@ class ComplexDataset(Dataset):
                     cnt[1] += 1
                 self.data.append((gadf_image_path, gasf_image_path, label))
 
-        # Compute stats safely
-        self.gasf_mean, self.gasf_std = self._compute_stats(
-            [s[1] for s in self.data], transforms
-        )
-        self.gadf_mean, self.gadf_std = self._compute_stats(
-            [s[0] for s in self.data], transforms
-        )
+        # # Compute stats safely
+        # self.gasf_mean, self.gasf_std = self._compute_stats(
+        #     [s[1] for s in self.data], transforms
+        # )
+        # self.gadf_mean, self.gadf_std = self._compute_stats(
+        #     [s[0] for s in self.data], transforms
+        # )
 
         self.pos_weight = cnt[0] / cnt[1]
 
@@ -490,34 +508,34 @@ class ComplexDataset(Dataset):
         return config["default_config"]
 
     # The rest of your methods remain the same
-    def _compute_stats(self, image_paths, transform):
-        means, stds = [], []
-        for img_path in image_paths:
-            try:
-                # Replace Image.open with read_image
-                img = read_image(img_path)
+    # def _compute_stats(self, image_paths, transform):
+    #     means, stds = [], []
+    #     for img_path in image_paths:
+    #         try:
+    #             # Replace Image.open with read_image
+    #             img = read_image(img_path)
 
-                # Convert to float (0-1 range)
-                img = img.float() / 255.0
+    #             # Convert to float (0-1 range)
+    #             img = img.float() / 255.0
 
-                if transform:
-                    img_tensor = transform(img)
-                else:
-                    img_tensor = img  # Already a tensor, no need for ToTensor
+    #             if transform:
+    #                 img_tensor = transform(img)
+    #             else:
+    #                 img_tensor = img  # Already a tensor, no need for ToTensor
 
-                means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
-                stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
-            except Exception as e:
-                print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
-                continue
+    #             means.append(img_tensor.mean(dim=(1, 2)).cpu().numpy())
+    #             stds.append(img_tensor.std(dim=(1, 2)).cpu().numpy())
+    #         except Exception as e:
+    #             print(f"Warning: Failed to compute stats for {img_path}: {str(e)}")
+    #             continue
 
-        if not means:
-            print(
-                "Warning: No valid images for stats computation, using default mean/std"
-            )
-            return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
+    #     if not means:
+    #         print(
+    #             "Warning: No valid images for stats computation, using default mean/std"
+    #         )
+    #         return np.array([0.5, 0.5, 0.5]), np.array([0.5, 0.5, 0.5])
 
-        return np.mean(means, axis=0), np.mean(stds, axis=0)
+    #     return np.mean(means, axis=0), np.mean(stds, axis=0)
 
     def __len__(self):
         return len(self.data)
@@ -534,13 +552,13 @@ class ComplexDataset(Dataset):
 
         gadf_image = T.functional.normalize(
             gadf_image,
-            mean=[0.17552601, 0.5575954, 0.5202115],
-            std=[0.04892688, 0.06892854, 0.04003831],
+            mean=[0.19756491, 0.5550784,  0.50753045],
+            std=[0.08108524, 0.10870767, 0.05927933],
         )
         gasf_image = T.functional.normalize(
             gasf_image,
-            mean=[0.26458868, 0.10593485, 0.4051368],
-            std=[0.0302519, 0.05785861, 0.04091412],
+            mean=[0.25332475, 0.17397244, 0.43626496],
+            std=[0.03306787, 0.08601908, 0.04909801],
         )
         # --------------------GASF + i GADF ------------------------------------------
         # Create a complex tensor using GASF as real part and GADF as imaginary part

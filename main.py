@@ -69,14 +69,14 @@ def main():
     # }
 
     # Get data loaders (complex data for complex model)
-    dataloaders = get_dataloaders(dataset_type="gadf")
+    dataloaders = get_dataloaders(dataset_type="complex")
 
     # Create model directly
     # model = complex_resnet18(config)
-    model = resnet18()
+    # model = resnet18()
     # model = DualResNet(config["data"]["num_classes"])
     # model = DualResNetCF(config["data"]["num_classes"])
-    # model = hybrid_resnet18()
+    model = hybrid_resnet18()
     # model = hybrid_resnet_RO_18()
     # model = dual_stream_phase_mag_resnet_18()
     if torch.cuda.device_count() > 1:

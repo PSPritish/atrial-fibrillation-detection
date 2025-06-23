@@ -319,13 +319,13 @@ def main():
 
     try:
         # Update model path to your best model
-        model_name = "Complex ResNet-18 GASF + i GADF"
-        model_path = "/home/prasad/Desktop/atrial_fibrillation_detection/saved_models/Complex_Resnet18_GASF_iGADF/Complex_Resnet18_GASF_iGADF_model_epoch_29.pth"
+        model_name = "Testing"
+        model_path = "saved_models/DualStreamPhaseMagNet_GASF_iGADF/best_model_epoch_27.pth"
         # model = resnet18(config)
-        model = complex_resnet18(config)
+        # model = complex_resnet18(config)
         # model = hybrid_resnet18()
         # model = hybrid_resnet_RO_18()
-        # model = dual_stream_phase_mag_resnet_18()
+        model = dual_stream_phase_mag_resnet_18()
 
         model = torch.nn.DataParallel(model)
         state_dict = torch.load(model_path, map_location=device)
