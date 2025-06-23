@@ -533,10 +533,14 @@ class ComplexDataset(Dataset):
             gasf_image = self.transforms(gasf_image)
 
         gadf_image = T.functional.normalize(
-            gadf_image, mean=self.gadf_mean, std=self.gadf_std
+            gadf_image,
+            mean=[0.17552601, 0.5575954, 0.5202115],
+            std=[0.04892688, 0.06892854, 0.04003831],
         )
         gasf_image = T.functional.normalize(
-            gasf_image, mean=self.gasf_mean, std=self.gasf_std
+            gasf_image,
+            mean=[0.26458868, 0.10593485, 0.4051368],
+            std=[0.0302519, 0.05785861, 0.04091412],
         )
         # --------------------GASF + i GADF ------------------------------------------
         # Create a complex tensor using GASF as real part and GADF as imaginary part

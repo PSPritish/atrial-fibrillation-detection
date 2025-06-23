@@ -34,6 +34,7 @@ from models.DualStreamPhaseMagNet import dual_stream_phase_mag_resnet_18
 from models.hybrid_resnet import hybrid_resnet18
 from models.hybrid_resnet_RO import hybrid_resnet_RO_18
 
+
 def load_config(config_path=None):
     """Load configuration from YAML file"""
     if config_path is None:
@@ -44,6 +45,7 @@ def load_config(config_path=None):
         config = yaml.safe_load(file)
 
     return config["default_config"]
+
 
 def test_model(model, test_loader, device):
     """Test model and return predictions, probabilities, and true labels"""
@@ -71,7 +73,7 @@ def test_model(model, test_loader, device):
                 outputs = outputs.abs()
 
             # Get probabilities using sigmoid
-            probs = torch.sigmoid(outputs).squeeze()
+            probs = torch.sigmoid(outputs).view(-1)
             preds = (probs > 0.5).float()
 
             # Append to lists
@@ -302,7 +304,7 @@ def main():
         }
         # Get the appropriate dataset class
         Dataset = dataset_classes[dataset_type]
-        test_dataset = Dataset(mode="test", transforms=transforms)
+        test_dataset = Dataset(mode="val", transforms=transforms)
         test_loader = DataLoader(
             test_dataset,
             batch_size=32,
@@ -318,7 +320,7 @@ def main():
     try:
         # Update model path to your best model
         model_name = "Complex ResNet-18 GASF + i GADF"
-        model_path = "saved_models/Complex_Resnet18_GASF_iGADF/Complex_Resnet18_GASF_iGADF_model_epoch_29.pth"
+        model_path = "/home/prasad/Desktop/atrial_fibrillation_detection/saved_models/Complex_Resnet18_GASF_iGADF/Complex_Resnet18_GASF_iGADF_model_epoch_29.pth"
         # model = resnet18(config)
         model = complex_resnet18(config)
         # model = hybrid_resnet18()
