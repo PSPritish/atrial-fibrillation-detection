@@ -116,7 +116,7 @@ class ComplexResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        self.avgpool = ComplexAdaptiveAvgPool2d((1, 1)) 
+        self.avgpool = ComplexAdaptiveAvgPool2d((1, 1))
         # self.dropout = ComplexDropout(p=0.5)
 
         # For binary classification, use a single output with sigmoid
@@ -187,6 +187,15 @@ class ComplexResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        # Fix Captum's possible stripped batch
+        if x.dim() == 3:
+            x = x.unsqueeze(0)
+
+        # Handle Captum 6-channel format
+        if x.dim() == 4 and x.shape[1] == 6:
+            real = x[:, :3]
+            imag = x[:, 3:]
+            x = torch.stack((real, imag), dim=-1)  # (B, 3, H, W, 2)
         # Convert from [batch, channels, height, width, 2] format to PyTorch complex tensor
         if not torch.is_complex(x) and x.dim() == 5 and x.size(-1) == 2:
             # The last dimension contains real and imaginary parts

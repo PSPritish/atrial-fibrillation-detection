@@ -212,4 +212,4 @@ class Trainer:
         model_path = os.path.join(
             save_path, f"{self.model_name}_model_epoch_{epoch+1}.pth"
         )
-        torch.save(self.model.state_dict(), model_path)
+        torch.save(self.model.module.state_dict(), model_path)
