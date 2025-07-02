@@ -187,18 +187,13 @@ class ComplexResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        # Fix Captum's possible stripped batch
         if x.dim() == 3:
             x = x.unsqueeze(0)
-
-        # Handle Captum 6-channel format
         if x.dim() == 4 and x.shape[1] == 6:
             real = x[:, :3]
             imag = x[:, 3:]
             x = torch.stack((real, imag), dim=-1)  # (B, 3, H, W, 2)
-        # Convert from [batch, channels, height, width, 2] format to PyTorch complex tensor
         if not torch.is_complex(x) and x.dim() == 5 and x.size(-1) == 2:
-            # The last dimension contains real and imaginary parts
             real_part = x[..., 0]
             imag_part = x[..., 1]
             x = torch.complex(real_part, imag_part)
